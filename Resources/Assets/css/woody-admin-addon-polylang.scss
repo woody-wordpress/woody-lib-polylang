@@ -1,0 +1,129 @@
+/**
+ * Woody Polylang
+ * @author      Leo POIROUX
+ * @copyright   2019 Raccourci Agency
+*/
+
+.woody-polylang-container {
+    a:focus {
+        outline: none !important;
+        box-shadow: none;
+    }
+
+    .woody-polylang-header {
+        background-image: url(../img/logo.png);
+        background-repeat: no-repeat;
+        background-position: 25px 20px;
+        background-size: 48px;
+        padding: 20px 25px 20px 83px;
+        overflow: hidden;
+        border-bottom: 1px solid #efefef;
+        position: relative;
+
+        h1 {
+            padding: 0;
+            margin: 4px 0 0;
+            font-weight: 700;
+            font-size: 26px;
+            max-width: 70%;
+
+            span {
+                display: block;
+                padding: 8px 0 0;
+                color: #888;
+                font-size: 15px;
+                font-weight: 400;
+            }
+        }
+    }
+
+    /* Wrapper + thumbs */
+    .woody-polylang-wrapper {
+        padding: 20px;
+
+        ul,
+        ol {
+            list-style-type: disc;
+            padding-left: 30px;
+        }
+
+        ul ul,
+        ol ul {
+            list-style-type: circle;
+            padding-left: 60px;
+            font-size: 10px;
+            color: #999;
+        }
+
+        .help {
+            background: lightyellow;
+            padding: 20px;
+            margin-bottom: 15px;
+            border: 1px dotted yellow;
+            font-size: 12px;
+            line-height: 12px;
+
+            ul {
+                margin-bottom: 0;
+            }
+        }
+
+        .errors {
+            color: red;
+        }
+
+        .help {
+            background: lightyellow;
+            padding: 20px;
+            margin-bottom: 15px;
+            border: 1px dotted yellow;
+            font-size: 12px;
+            line-height: 12px;
+
+            ul {
+                margin-bottom: 0;
+            }
+        }
+
+        form {
+            fieldset {
+                margin: 15px 0;
+            }
+
+            legend {
+                font-weight: bold;
+                font-size: 18px;
+                color: #0073aa;
+                margin-bottom: 10px;
+            }
+
+            td {
+                padding: 3px 0;
+            }
+
+            th {
+                text-align: left;
+            }
+
+            label {
+                margin-right: 15px;
+            }
+
+            input.text {
+                width: 650px;
+            }
+
+            input.button {
+                margin-top: 15px;
+            }
+
+            .error {
+                color: #fff;
+                font-weight: bold;
+                background: red;
+                padding: 3px 6px;
+                border-radius: 3px;
+            }
+        }
+    }
+}
