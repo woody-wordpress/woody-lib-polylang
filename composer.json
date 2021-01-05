@@ -1,5 +1,5 @@
 {
-    "name": "woody-wordpress-pro/woody-addon-polylang",
+    "name": "woody-wordpress/woody-addon-polylang",
     "type": "wordpress-vendor",
     "version": "1.0.0",
     "description": "This plugin adds functionalities and configuration for Polylang Plugin",
