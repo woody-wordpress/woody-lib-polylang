@@ -1,0 +1,25 @@
+{
+    "name": "woody-wordpress-pro/woody-addon-polylang",
+    "type": "wordpress-vendor",
+    "version": "1.0.0",
+    "description": "This plugin adds functionalities and configuration for Polylang Plugin",
+    "license": "GPL-2.0",
+    "authors": [
+        {
+            "name": "Léo POIROUX",
+            "email": "leo@raccourci.fr"
+        },
+        {
+            "name": "Benoit BOUCHAUD",
+            "email": "benoit.bouchaud@raccourci.fr"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Woody\\Addon\\AddonPolylang\\": ""
+        }
+    },
+    "require": {
+        "php": "^7.3"
+    }
+}
