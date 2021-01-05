@@ -129,7 +129,6 @@ final class AddonPolylang extends Module
         if (!empty($screen->id) && strpos($screen->id, 'languages_page_woody-polylang-options') !== false) {
             wp_enqueue_style('addon-admin-polylang-stylesheet', $this->addonAssetPath('woody-addon-polylang', 'css/woody-admin-addon-polylang.css'), [], null);
         }
-        wp_enqueue_style('addon-admin-global-polylang-stylesheet', $this->addonAssetPath('woody-addon-polylang', 'css/woody-admin-global-polylang.css'), [], null);
     }
 
     public function woodyThemeSiteconfig($siteConfig)
