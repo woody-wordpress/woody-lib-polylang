@@ -127,7 +127,7 @@ final class AddonPolylang extends Module
     {
         $screen = get_current_screen();
         if (!empty($screen->id) && strpos($screen->id, 'languages_page_woody-polylang-options') !== false) {
-            wp_enqueue_style('addon-admin-polylang-stylesheet', $this->addonAssetPath('woody-addon-polylang', 'css/woody-admin-addon-polylang.css'), [], null);
+            wp_enqueue_style('addon-admin-polylang-stylesheet', $this->addonAssetPath('woody-addon-polylang', 'css/main.css'), [], null);
         }
     }
 

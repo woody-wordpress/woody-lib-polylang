@@ -19,9 +19,7 @@
         "gulp-rev": "^9.0.0",
         "gulp-sass": "^4.0.2",
         "gulp-sizereport": "^1.2.1",
-        "pump": "^3.0.0"
-    },
-    "dependencies": {
+        "pump": "^3.0.0",
         "caniuse-lite": "^1.0.30001157"
     }
 }
