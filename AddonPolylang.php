@@ -19,7 +19,7 @@ final class AddonPolylang extends Module
 
     public function initialize(ParameterManager $parameters, Container $container)
     {
-        define('WOODY_ADDON_POLYLANG_VERSION', '1.0.0');
+        define('WOODY_ADDON_POLYLANG_VERSION', '1.0.3');
         define('WOODY_ADDON_POLYLANG_ROOT', __FILE__);
         define('WOODY_ADDON_POLYLANG_DIR_ROOT', dirname(WOODY_ADDON_POLYLANG_ROOT));
         define('WOODY_ADDON_POLYLANG_URL', basename(__DIR__) . '/Resources/Assets');
@@ -499,9 +499,30 @@ final class AddonPolylang extends Module
     public function pllRelHreflangAttributes($hreflangs)
     {
         $woody_lang_enable = get_option('woody_lang_enable', []);
-        foreach ($hreflangs as $lang => $hreflang) {
-            if (!in_array($lang, $woody_lang_enable)) {
-                unset($hreflangs[$lang]);
+
+        // Dans le cas des saisons, on remplace le tableau hreflangs envoyé par polylang
+        // pour ne renvoyer que les hreflangs de la même saison
+        $currentSeasonLangs = $this->woodyPllLanguagesList(pll_current_language());
+        if (!empty($currentSeasonLangs)) {
+            $hreflangs = [];
+            foreach ($currentSeasonLangs as $key => $langObject) {
+
+                // On exclut les langues non actives. PLL n'exclut pas la langue courante, donc on fait de même
+                //(Google recommends to include self link https://support.google.com/webmasters/answer/189077?hl=en)
+                if (!in_array($langObject->slug, $woody_lang_enable)) {
+                    continue;
+                }
+
+                $translation = apply_filters('woody_get_permalink', pll_get_post(get_the_ID(), $langObject->slug));
+                if (!empty($translation)) {
+                    $hreflangs[$this->locale_to_lang($langObject->locale)] = $translation;
+                }
+            }
+        } else {
+            foreach ($hreflangs as $lang => $hreflang) {
+                if (!in_array($lang, $woody_lang_enable)) {
+                    unset($hreflangs[$lang]);
+                }
             }
         }
 
