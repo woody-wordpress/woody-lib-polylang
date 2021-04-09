@@ -19,7 +19,7 @@ final class AddonPolylang extends Module
 
     public function initialize(ParameterManager $parameters, Container $container)
     {
-        define('WOODY_ADDON_POLYLANG_VERSION', '1.0.3');
+        define('WOODY_ADDON_POLYLANG_VERSION', '1.0.4');
         define('WOODY_ADDON_POLYLANG_ROOT', __FILE__);
         define('WOODY_ADDON_POLYLANG_DIR_ROOT', dirname(WOODY_ADDON_POLYLANG_ROOT));
         define('WOODY_ADDON_POLYLANG_URL', basename(__DIR__) . '/Resources/Assets');
@@ -99,7 +99,7 @@ final class AddonPolylang extends Module
         add_filter('pll_sync_post_fields', [$this, 'unsetSyncPostURL'], 10, 4);
         add_action('pll_post_synchronized', [$this, 'modifyPostName'], 10, 3);
 
-        // WP_CLI translate posts
+        // Translate posts
         \WP_CLI::add_command('woody:translate_posts', [$this, 'translatePostsWpcli']);
     }
 
@@ -620,7 +620,7 @@ final class AddonPolylang extends Module
     }
 
     /**
-     * WP_CLI translate posts
+     * Translate posts
      */
     public function translatePostsWpcli($args, $assoc_args)
     {
@@ -631,7 +631,7 @@ final class AddonPolylang extends Module
             if (!empty($args[1])) {
                 $translate_in = $this->existingLanguages($args[1]);
             } else {
-                \WP_CLI::error('Missing "translate_in" argument. Use : WP_SITE_KEY=<sitename> wp woody:translate_posts <translate from> <translate_in_lang>');
+                output_error('Missing "translate_in" argument. Use : WP_SITE_KEY=<sitename> wp woody:translate_posts <translate from> <translate_in_lang>');
             }
 
             if (!empty($translate_from) && !empty($translate_in)) {
@@ -654,19 +654,19 @@ final class AddonPolylang extends Module
                             foreach ($query_result->posts as $post) {
                                 $this->translatePosts($post, $translate_from, $lang);
                             }
-                            \WP_CLI::success('Posts translated successfully, ' . $query_result->found_posts . ' posts translated in '. $lang);
+                            output_success('Posts translated successfully, ' . $query_result->found_posts . ' posts translated in '. $lang);
                         } else {
-                            \WP_CLI::warning('Do not translate a language into the same language.');
+                            output_warning('Do not translate a language into the same language.');
                         }
                     }
                 } else {
-                    \WP_CLI::error('0 post to translate. Make sure that this language ('.$translate_from.') exists, and that pages are associated with it.');
+                    output_error('0 post to translate. Make sure that this language ('.$translate_from.') exists, and that pages are associated with it.');
                 }
             } else {
-                \WP_CLI::error('Missing or invalid arguments.');
+                output_error('Missing or invalid arguments.');
             }
         } else {
-            \WP_CLI::error('Missing or invalid arguments.');
+            output_error('Missing or invalid arguments.');
         }
     }
 
@@ -688,7 +688,7 @@ final class AddonPolylang extends Module
         $result = pll_get_post($post_parent->ID, $lang);
 
         if ($result) {
-            \WP_CLI::line('Post '. $post_parent->ID . ' already translated in '. $lang . '. Post ID : '. $result);
+            output_log('Post '. $post_parent->ID . ' already translated in '. $lang . '. Post ID : '. $result);
         } else {
             $new_post = PLL()->sync_post->copy_post($post_parent->ID, $lang, false);
         }
