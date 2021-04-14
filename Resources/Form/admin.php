@@ -62,11 +62,18 @@ switch ($active_tab) {
                 $season = 'default';
             }
 
-            $form->addRadioList($language->slug, $language->name . ' : ', [
+            $seasons_choices = [
                 'default' => 'Pas de saison',
                 'hiver' => 'Hiver',
                 'ete' => 'Été',
-            ])
+            ];
+
+            if (substr($language->locale, 3, 2) == 'SP') {
+                console_log($language, 'languages');
+                $seasons_choices[$language->slug] = $language->name;
+            }
+
+            $form->addRadioList($language->slug, $language->name . ' : ', $seasons_choices)
                 ->setDefaultValue($season)
                 ->getSeparatorPrototype()->setName('');
         }
