@@ -69,7 +69,6 @@ switch ($active_tab) {
             ];
 
             if (substr($language->locale, 3, 2) == 'SP') {
-                console_log($language, 'languages');
                 $seasons_choices[$language->slug] = $language->name;
             }
 
