@@ -136,4 +136,4 @@ switch ($active_tab) {
         break;
 }
 
-require_once(WOODY_ADDON_POLYLANG_DIR_ROOT . '/Resources/Admin/admin.php');
+require_once(WOODY_LIB_POLYLANG_DIR_ROOT . '/Resources/Admin/admin.php');

@@ -1,7 +1,7 @@
 {
     "private": true,
-    "name": "woody-addon-polylang",
-    "title": "Woody Addon Polylang by Raccourci Agency",
+    "name": "woody-lib-polylang",
+    "title": "Woody Library Polylang by Raccourci Agency",
     "author": "Raccourci Agency",
     "scripts": {
         "watch": "gulp watch",

@@ -3,7 +3,7 @@
  *
  */
 
-namespace Woody\Addon\AddonPolylang\Configurations;
+namespace Woody\Lib\Polylang\Configurations;
 
 class Services
 {
