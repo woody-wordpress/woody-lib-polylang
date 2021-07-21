@@ -19,7 +19,7 @@ final class AddonPolylang extends Module
 
     public function initialize(ParameterManager $parameters, Container $container)
     {
-        define('WOODY_ADDON_POLYLANG_VERSION', '1.0.5');
+        define('WOODY_ADDON_POLYLANG_VERSION', '1.1.1');
         define('WOODY_ADDON_POLYLANG_ROOT', __FILE__);
         define('WOODY_ADDON_POLYLANG_DIR_ROOT', dirname(WOODY_ADDON_POLYLANG_ROOT));
         define('WOODY_ADDON_POLYLANG_URL', basename(__DIR__) . '/Resources/Assets');
