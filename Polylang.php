@@ -365,6 +365,7 @@ final class Polylang extends Module
         if (function_exists('pll_languages_list')) {
             if (empty($slug)) {
                 output_error(sprintf('Impossible de trouver la langue de ce slug vide'));
+                return;
             }
 
             $languages = pll_languages_list(['fields' => '']);
