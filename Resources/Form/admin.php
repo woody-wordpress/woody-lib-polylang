@@ -136,27 +136,31 @@ switch ($active_tab) {
         break;
 
     case 'usage_lang':
+        $meta_lang_usages_options = get_option('meta_lang_usages', []);
         $meta_lang_usages = apply_filters('meta_lang_usages', [
             'page' => 'Page'
         ]);
         foreach ($languages as $language) {
             $form->addGroup($language->name);
             foreach ($meta_lang_usages as $meta_lang_usage_key => $meta_lang_usage) {
-                $form->addCheckbox($language->slug.'_'.$meta_lang_usage_key, $meta_lang_usage);
+                $form->addCheckbox($language->slug.'_'.$meta_lang_usage_key, $meta_lang_usage)
+                    ->setDefaultValue(in_array($meta_lang_usage_key, $meta_lang_usages_options[$language->slug]));
             }
         }
         $form->addSubmit('save', 'Enregistrer')
             ->setHtmlAttribute('class', 'button button-primary');
 
         if ($form->isSuccess()) {
-            // Todo
-//            $options = [];
-//            foreach ($form->getValues() as $lang => $bool) {
-//                if ($bool) {
-//                    $options[] = $lang;
-//                }
-//            }
-           // update_option('meta_lang_usage', $options);
+            $options = [];
+            foreach ($form->getValues() as $lang_usage => $lang_usage_value) {
+                list($lang, $usage) = explode('_', $lang_usage);
+                if($lang_usage_value) {
+                    $options[$lang][] = $usage;
+                } elseif (!isset($options[$lang])) {
+                    $options[$lang] = [];
+                }
+            }
+            update_option('meta_lang_usages', $options);
         }
         break;
 }
