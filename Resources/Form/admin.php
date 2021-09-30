@@ -136,7 +136,7 @@ switch ($active_tab) {
         break;
 
     case 'usage_lang':
-        $meta_lang_usages_options = get_option('meta_lang_usages', []);
+        $meta_lang_usages_options = get_option('meta_lang_usages');
         $meta_lang_usages = apply_filters('meta_lang_usages', [
             'page' => 'Page'
         ]);
@@ -161,6 +161,7 @@ switch ($active_tab) {
                 }
             }
             update_option('meta_lang_usages', $options);
+            do_action('update_meta_lang_usages', $options);
         }
         break;
 }
