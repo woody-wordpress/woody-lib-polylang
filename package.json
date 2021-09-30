@@ -1,0 +1,25 @@
+{
+    "private": true,
+    "name": "woody-lib-polylang",
+    "title": "Woody Library Polylang by Raccourci Agency",
+    "author": "Raccourci Agency",
+    "scripts": {
+        "watch": "gulp watch",
+        "build": "gulp build"
+    },
+    "devDependencies": {
+        "del": "^4.1.0",
+        "gulp": "^4.0.0",
+        "gulp-autoprefixer": "^6.0.0",
+        "gulp-clean-css": "^4.0.0",
+        "gulp-imagemin": "^5.0.3",
+        "gulp-minify": "^3.1.0",
+        "gulp-notify": "^3.2.0",
+        "gulp-plumber": "^1.2.1",
+        "gulp-rev": "^9.0.0",
+        "gulp-sass": "^4.0.2",
+        "gulp-sizereport": "^1.2.1",
+        "pump": "^3.0.0",
+        "caniuse-lite": "^1.0.30001157"
+    }
+}
