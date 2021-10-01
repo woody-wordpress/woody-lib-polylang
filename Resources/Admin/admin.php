@@ -23,6 +23,13 @@ if (!defined('ABSPATH')) {
         <a href="?page=woody-polylang-options&tab=seasons_lang" class="nav-tab <?php echo $active_tab == 'seasons_lang' ? 'nav-tab-active' : ''; ?>">Saisonnalité</a>
         <a href="?page=woody-polylang-options&tab=hawwwai_lang" class="nav-tab <?php echo $active_tab == 'hawwwai_lang' ? 'nav-tab-active' : ''; ?>">Hawwwai</a>
         <a href="?page=woody-polylang-options&tab=usage_lang" class="nav-tab <?php echo $active_tab == 'usage_lang' ? 'nav-tab-active' : ''; ?>">Usages</a>
+        <?php
+            foreach ($custom_tabs as $tabSlug => $tabTitle) {
+        ?>
+                <a href="?page=woody-polylang-options&tab=<?php echo $tabSlug; ?>" class="nav-tab <?php echo $active_tab == $tabSlug ? 'nav-tab-active' : ''; ?>"> <?php echo $tabTitle; ?></a>
+        <?php
+            }
+        ?>
     </h2>
 
     <section class="woody-polylang-wrapper">
