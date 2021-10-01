@@ -20,6 +20,7 @@ if (!empty(filter_input(INPUT_GET, 'tab'))) {
 
 // https://doc.nette.org/en/2.4/forms
 $form = new Form;
+$custom_tabs = apply_filters("polylang_custom_tabs", []);
 
 switch ($active_tab) {
     case 'enable_lang':
@@ -162,6 +163,14 @@ switch ($active_tab) {
             }
             update_option('meta_lang_usages', $options);
             do_action('update_meta_lang_usages', $options);
+        }
+        break;
+
+    default :
+        foreach ($custom_tabs as $tab_slug => $tab_title) {
+            if ($active_tab == $tab_slug) {
+                $form = apply_filters("custom_tab_form_$tab_slug", $form);
+            }
         }
         break;
 }
