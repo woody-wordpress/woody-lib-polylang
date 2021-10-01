@@ -161,8 +161,15 @@ switch ($active_tab) {
                     $options[$lang] = [];
                 }
             }
-            update_option('meta_lang_usages', $options);
-            do_action('update_meta_lang_usages', $options);
+
+            $update = apply_filters('allow_update_meta_lang_usages', ['status' => true], $options);
+
+            if($update['status']) {
+                update_option('meta_lang_usages', $options);
+                do_action('update_meta_lang_usages', $options);
+            } else {
+                $form->addError($update['message']);
+            }
         }
         break;
 
