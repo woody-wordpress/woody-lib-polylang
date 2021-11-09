@@ -113,17 +113,17 @@ final class Polylang extends Module
 
     public function metaLangUsagesRedirect()
     {
-        $current_lang = function_exists('pll_current_language') ? pll_current_language() : PLL_DEFAULT_LANGUAGE;
-        $addons = apply_filters('woody_meta_lang_usages_post_types', []);
+        if ($this->pageNow == 'post-new.php' || $this->pageNow == 'edit-tags.php') {
+            $current_lang = function_exists('pll_current_language') ? pll_current_language() : PLL_DEFAULT_LANGUAGE;
+            $addons = apply_filters('woody_meta_lang_usages_post_types', []);
 
-        if (!empty($this->langUsages) && !empty($addons)) {
-            foreach ($addons as $addon_key => $addon) {
-                if (!in_array($addon_key, $this->langUsages[$current_lang])) {
-                    foreach ($addon['posts_types'] as $post_type) {
-                        global $typenow;
-                        $current_page = preg_replace('/&lang=(.*)/', '', $_SERVER['REQUEST_URI']);
-                        if ($typenow == $post_type) {
-                            if ($this->pageNow == 'post-new.php' || $this->pageNow == 'edit-tags.php') {
+            if (!empty($this->langUsages) && !empty($addons)) {
+                foreach ($addons as $addon_key => $addon) {
+                    if ($current_lang != false && !in_array($addon_key, $this->langUsages[$current_lang])) {
+                        foreach ($addon['posts_types'] as $post_type) {
+                            global $typenow;
+                            $current_page = preg_replace('/&lang=(.*)/', '', $_SERVER['REQUEST_URI']);
+                            if ($typenow == $post_type) {
                                 wp_redirect($current_page . '&lang=' . $addon['default_lang'], 301, 'Meta Lang Usage');
                             }
                         }
