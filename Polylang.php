@@ -135,10 +135,9 @@ final class Polylang extends Module
 
     public function metaLangUsagesBodyClasses($classes)
     {
-        if (!empty($this->langUsages) && ($this->pageNow == 'post-new.php' || $this->pageNow == 'edit-tags.php')) {
-            // $str = urldecode(http_build_query($this->langUsages, '', ' '));
-            // $str = preg_replace('(\[[0-9]\]=)', '-', $str);
-            $addons = apply_filters('woody_meta_lang_usages_post_types', $addons);
+        if (!empty($this->langUsages) && ($this->pageNow == 'post-new.php' || $this->pageNow == 'edit-tags.php' || $this->pageNow == 'edit.php')) {
+            $classes .= ' langs-to-hide';
+            $addons = apply_filters('woody_meta_lang_usages_post_types', []);
             global $typenow;
             foreach ($addons as $addon_key => $addon) {
                 if (in_array($typenow, $addon['posts_types'])) {
