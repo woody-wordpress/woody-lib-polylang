@@ -145,7 +145,7 @@ switch ($active_tab) {
             $form->addGroup($language->name);
             foreach ($meta_lang_usages as $meta_lang_usage_key => $meta_lang_usage) {
                 $form->addCheckbox($language->slug.'_'.$meta_lang_usage_key, $meta_lang_usage)
-                    ->setDefaultValue(in_array($meta_lang_usage_key, $meta_lang_usages_options[$language->slug]));
+                    ->setDefaultValue(!empty($meta_lang_usages_options[$language->slug]) && in_array($meta_lang_usage_key, $meta_lang_usages_options[$language->slug]));
             }
         }
         $form->addSubmit('save', 'Enregistrer')
@@ -155,7 +155,7 @@ switch ($active_tab) {
             $options = [];
             foreach ($form->getValues() as $lang_usage => $lang_usage_value) {
                 list($lang, $usage) = explode('_', $lang_usage);
-                if($lang_usage_value) {
+                if ($lang_usage_value) {
                     $options[$lang][] = $usage;
                 } elseif (!isset($options[$lang])) {
                     $options[$lang] = [];
@@ -164,7 +164,7 @@ switch ($active_tab) {
 
             $update = apply_filters('allow_update_meta_lang_usages', ['status' => true], $options);
 
-            if($update['status']) {
+            if ($update['status']) {
                 update_option('meta_lang_usages', $options);
                 do_action('update_meta_lang_usages', $options);
             } else {
@@ -173,7 +173,7 @@ switch ($active_tab) {
         }
         break;
 
-    default :
+    default:
         foreach ($custom_tabs as $tab_slug => $tab_title) {
             if ($active_tab == $tab_slug) {
                 $form = apply_filters("custom_tab_form_$tab_slug", $form);

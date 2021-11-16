@@ -114,7 +114,7 @@ final class Polylang extends Module
     public function metaLangUsagesRedirect()
     {
         if ($this->pageNow == 'post-new.php' || $this->pageNow == 'edit-tags.php') {
-            $current_lang = function_exists('pll_current_language') ? pll_current_language() : PLL_DEFAULT_LANGUAGE;
+            $current_lang = function_exists('pll_current_language') ? pll_current_language() : false;
             $addons = apply_filters('woody_meta_lang_usages_post_types', []);
 
             if (!empty($this->langUsages) && !empty($addons)) {
