@@ -19,9 +19,24 @@ if (!defined('ABSPATH')) {
     </header>
 
     <h2 class="nav-tab-wrapper">
-        <a href="?page=woody-polylang-options&tab=enable_lang" class="nav-tab <?php echo $active_tab == 'enable_lang' ? 'nav-tab-active' : ''; ?>">Activer l'indexation</a>
-        <a href="?page=woody-polylang-options&tab=seasons_lang" class="nav-tab <?php echo $active_tab == 'seasons_lang' ? 'nav-tab-active' : ''; ?>">Saisonnalité</a>
-        <a href="?page=woody-polylang-options&tab=hawwwai_lang" class="nav-tab <?php echo $active_tab == 'hawwwai_lang' ? 'nav-tab-active' : ''; ?>">Hawwwai</a>
+        <a href="?page=woody-polylang-options&tab=enable_lang"
+            class="nav-tab <?php echo $active_tab == 'enable_lang' ? 'nav-tab-active' : ''; ?>">Activer
+            l'indexation</a>
+        <a href="?page=woody-polylang-options&tab=seasons_lang"
+            class="nav-tab <?php echo $active_tab == 'seasons_lang' ? 'nav-tab-active' : ''; ?>">Saisonnalité</a>
+        <a href="?page=woody-polylang-options&tab=hawwwai_lang"
+            class="nav-tab <?php echo $active_tab == 'hawwwai_lang' ? 'nav-tab-active' : ''; ?>">Hawwwai</a>
+        <a href="?page=woody-polylang-options&tab=usage_lang"
+            class="nav-tab <?php echo $active_tab == 'usage_lang' ? 'nav-tab-active' : ''; ?>">Usages</a>
+        <?php
+            foreach ($custom_tabs as $tabSlug => $tabTitle) {
+                ?>
+        <a href="?page=woody-polylang-options&tab=<?php echo $tabSlug; ?>"
+            class="nav-tab <?php echo $active_tab == $tabSlug ? 'nav-tab-active' : ''; ?>">
+            <?php echo $tabTitle; ?></a>
+        <?php
+            }
+        ?>
     </h2>
 
     <section class="woody-polylang-wrapper">
@@ -29,17 +44,17 @@ if (!defined('ABSPATH')) {
         switch ($active_tab) {
             case 'enable_lang':
                 ?>
-            <div class="help">
-                Tant que la langue n'est pas activée sur cette page, le site est masqué pour Google :
-                <ul>
-                    <li>Le robots.txt du site bloque l'indexation du site</li>
-                    <li>Les métas "hreflang" sont désactivées sur toutes les pages</li>
-                    <li>Les métas "hreflang" sont désactivées sur toutes les fiches SIT</li>
-                    <li>Une méta "noindex, nofollow" est positionnée sur toutes les pages</li>
-                    <li>Le sitemap.xml est désactivé</li>
-                </ul>
-            </div>
-            <?php
+        <div class="help">
+            Tant que la langue n'est pas activée sur cette page, le site est masqué pour Google :
+            <ul>
+                <li>Le robots.txt du site bloque l'indexation du site</li>
+                <li>Les métas "hreflang" sont désactivées sur toutes les pages</li>
+                <li>Les métas "hreflang" sont désactivées sur toutes les fiches SIT</li>
+                <li>Une méta "noindex, nofollow" est positionnée sur toutes les pages</li>
+                <li>Le sitemap.xml est désactivé</li>
+            </ul>
+        </div>
+        <?php
             break;
 
         case 'seasons_lang':
@@ -48,11 +63,11 @@ if (!defined('ABSPATH')) {
 
         case 'hawwwai_lang':
             ?>
-            <div class="help">
-                ATTENTION ! Si vous cochez une langue les fiches ne seront plus importées dans cette langue.
-                La langue par défaut ne peut être désactivée.
-            </div>
-            <?php
+        <div class="help">
+            ATTENTION ! Si vous cochez une langue les fiches ne seront plus importées dans cette langue.
+            La langue par défaut ne peut être désactivée.
+        </div>
+        <?php
             break;
     }
     ?>

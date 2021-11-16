@@ -21,6 +21,7 @@ if (!empty(filter_input(INPUT_GET, 'tab'))) {
 // https://doc.nette.org/en/2.4/forms
 $form = new Form;
 
+$custom_tabs = apply_filters("polylang_custom_tabs", []);
 switch ($active_tab) {
     case 'enable_lang':
         $woody_lang_enable = get_option('woody_lang_enable', []);
@@ -132,6 +133,51 @@ switch ($active_tab) {
                 }
             }
             update_option('woody_hawwwai_lang_disable', $options);
+        }
+        break;
+
+    case 'usage_lang':
+        $meta_lang_usages_options = get_option('meta_lang_usages');
+        $meta_lang_usages = apply_filters('meta_lang_usages', [
+            'page' => 'Page'
+        ]);
+        foreach ($languages as $language) {
+            $form->addGroup($language->name);
+            foreach ($meta_lang_usages as $meta_lang_usage_key => $meta_lang_usage) {
+                $form->addCheckbox($language->slug.'_'.$meta_lang_usage_key, $meta_lang_usage)
+                    ->setDefaultValue(!empty($meta_lang_usages_options[$language->slug]) && in_array($meta_lang_usage_key, $meta_lang_usages_options[$language->slug]));
+            }
+        }
+        $form->addSubmit('save', 'Enregistrer')
+            ->setHtmlAttribute('class', 'button button-primary');
+
+        if ($form->isSuccess()) {
+            $options = [];
+            foreach ($form->getValues() as $lang_usage => $lang_usage_value) {
+                list($lang, $usage) = explode('_', $lang_usage);
+                if ($lang_usage_value) {
+                    $options[$lang][] = $usage;
+                } elseif (!isset($options[$lang])) {
+                    $options[$lang] = [];
+                }
+            }
+
+            $update = apply_filters('allow_update_meta_lang_usages', ['status' => true], $options);
+
+            if ($update['status']) {
+                update_option('meta_lang_usages', $options);
+                do_action('update_meta_lang_usages', $options);
+            } else {
+                $form->addError($update['message']);
+            }
+        }
+        break;
+
+    default:
+        foreach ($custom_tabs as $tab_slug => $tab_title) {
+            if ($active_tab == $tab_slug) {
+                $form = apply_filters("custom_tab_form_$tab_slug", $form);
+            }
         }
         break;
 }
