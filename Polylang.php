@@ -124,7 +124,11 @@ final class Polylang extends Module
                             global $typenow;
                             $current_page = preg_replace('/&lang=(.*)/', '', $_SERVER['REQUEST_URI']);
                             if ($typenow == $post_type) {
-                                wp_redirect($current_page . '&lang=' . $addon['default_lang'], 301, 'Meta Lang Usage');
+                                if (!in_array($typenow, $this->langUsages[$addon['default_lang']])) {
+                                    wp_redirect('/wp/wp-admin', 301, 'Meta Lang Usage');
+                                } else {
+                                    wp_redirect($current_page . '&lang=' . $addon['default_lang'], 301, 'Meta Lang Usage');
+                                }
                             }
                         }
                     }
