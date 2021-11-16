@@ -127,9 +127,16 @@ body.langues_page_woody-polylang-options #wpcontent {
             .error {
                 color: #fff;
                 font-weight: bold;
-                background: red;
-                padding: 3px 6px;
-                border-radius: 3px;
+                background: #DC3232;
+                padding: 20px;
+                margin-bottom: 15px;
+                list-style-type: none;
+                font-size: 12px;
+                line-height: 12px;
+
+                li {
+                    margin-bottom: 0;
+                }
             }
         }
     }

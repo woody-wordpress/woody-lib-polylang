@@ -40,6 +40,7 @@ final class AddonPolylang extends Module
         register_activation_hook(WOODY_ADDON_POLYLANG_ROOT, [$this, 'activate']);
         register_deactivation_hook(WOODY_ADDON_POLYLANG_ROOT, [$this, 'deactivate']);
 
+        add_action('admin_init', [$this, 'adminInit']);
         add_action('admin_menu', [$this, 'generateMenu'], 15);
         add_action('admin_enqueue_scripts', [$this, 'enqueueAdminAssets']);
         add_action('wp_loaded', [$this, 'wpLoaded'], 30);
@@ -101,6 +102,29 @@ final class AddonPolylang extends Module
 
         // Translate posts
         \WP_CLI::add_command('woody:translate_posts', [$this, 'translatePostsWpcli']);
+    }
+
+    public function adminInit()
+    {
+        $langs_usages = get_option('meta_lang_usages');
+        $current_lang = function_exists('pll_current_language') ? pll_current_language() : PLL_DEFAULT_LANGUAGE;
+        $addons = apply_filters('woody_meta_lang_usages_post_types', []);
+
+        if (!empty($langs_usages) && !empty($addons)) {
+            foreach ($addons as $addon_key => $addon) {
+                if (!in_array($addon_key, $langs_usages[$current_lang])) {
+                    foreach ($addon['posts_types'] as $post_type) {
+                        global $wp;
+                        $current_page = preg_replace('/&lang=(.*)/', '', add_query_arg($wp->query_vars));
+                        if (strpos($current_page, 'post_type=' . $post_type) !== false) {
+                            if (strpos($current_page, 'post-new.php') !== false || strpos($current_page, 'edit-tags.php') !== false) {
+                                wp_redirect($current_page . '&lang=' . $addon['default_lang'], 301, 'Meta Lang Usage');
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     public function generateMenu()

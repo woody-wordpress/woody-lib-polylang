@@ -27,6 +27,10 @@ final class Polylang extends Module
         // Define SeasonsFlags
         $this->seasonsFlags = $this->getSeasonsFlags();
 
+        global $pagenow;
+        $this->pageNow = $pagenow;
+        $this->langUsages = get_option('meta_lang_usages');
+
         parent::initialize($parameters, $container);
     }
 
@@ -39,6 +43,10 @@ final class Polylang extends Module
     {
         register_activation_hook(WOODY_LIB_POLYLANG_ROOT, [$this, 'activate']);
         register_deactivation_hook(WOODY_LIB_POLYLANG_ROOT, [$this, 'deactivate']);
+
+        // Meta lang usages
+        add_action('admin_init', [$this, 'metaLangUsagesRedirect']);
+        add_filter('admin_body_class', [$this, 'metaLangUsagesBodyClasses']);
 
         add_action('admin_menu', [$this, 'generateMenu'], 15);
         add_action('admin_enqueue_scripts', [$this, 'enqueueAdminAssets']);
@@ -101,6 +109,52 @@ final class Polylang extends Module
 
         // Translate posts
         \WP_CLI::add_command('woody:translate_posts', [$this, 'translatePostsWpcli']);
+    }
+
+    public function metaLangUsagesRedirect()
+    {
+        if ($this->pageNow == 'post-new.php' || $this->pageNow == 'edit-tags.php') {
+            $current_lang = function_exists('pll_current_language') ? pll_current_language() : false;
+            $addons = apply_filters('woody_meta_lang_usages_post_types', []);
+
+            if (!empty($this->langUsages) && !empty($addons)) {
+                foreach ($addons as $addon_key => $addon) {
+                    if ($current_lang != false && !in_array($addon_key, $this->langUsages[$current_lang])) {
+                        foreach ($addon['posts_types'] as $post_type) {
+                            global $typenow;
+                            $current_page = preg_replace('/&lang=(.*)/', '', $_SERVER['REQUEST_URI']);
+                            if ($typenow == $post_type) {
+                                if (!in_array($typenow, $this->langUsages[$addon['default_lang']])) {
+                                    wp_redirect('/wp/wp-admin', 301, 'Meta Lang Usage');
+                                } else {
+                                    wp_redirect($current_page . '&lang=' . $addon['default_lang'], 301, 'Meta Lang Usage');
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public function metaLangUsagesBodyClasses($classes)
+    {
+        if (!empty($this->langUsages) && ($this->pageNow == 'post-new.php' || $this->pageNow == 'edit-tags.php' || $this->pageNow == 'edit.php')) {
+            $classes .= ' langs-to-hide';
+            $addons = apply_filters('woody_meta_lang_usages_post_types', []);
+            global $typenow;
+            foreach ($addons as $addon_key => $addon) {
+                if (in_array($typenow, $addon['posts_types'])) {
+                    foreach ($this->langUsages as $lang_code => $lang_usage) {
+                        if (!in_array($addon_key, $lang_usage)) {
+                            $classes .= ' hide-' . $lang_code;
+                        }
+                    }
+                }
+            }
+        }
+
+        return $classes;
     }
 
     public function generateMenu()
