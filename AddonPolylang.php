@@ -652,6 +652,13 @@ final class AddonPolylang extends Module
             $translate_from = !empty($args[0]) ? $args[0] : '' ;
             $translate_in = [] ;
 
+            // TODO: Add filter to push new post types
+            if (!empty($args[2]) && $args[2] == 'roadbook') {
+                $post_types = ['woody_rdbk_leaflets', 'woody_rdbk_feeds'];
+            } else {
+                $post_types = ['page'];
+            }
+
             if (!empty($args[1])) {
                 $translate_in = $this->existingLanguages($args[1]);
             } else {
@@ -663,7 +670,7 @@ final class AddonPolylang extends Module
                     'post_status' => 'any',
                     'post_parent' => 0,
                     'posts_per_page' => -1,
-                    'post_type' => 'page',
+                    'post_type' => $post_types,
                     'lang' => $translate_from,
                     'orderby' => 'menu_order',
                     'order' => 'ASC'
