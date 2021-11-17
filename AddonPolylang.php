@@ -659,6 +659,11 @@ final class AddonPolylang extends Module
                 $post_types = ['page'];
             }
 
+            output_log('Arg 0 is ' . $args[0]);
+            output_log('Arg 1 is ' . $args[1]);
+            output_log('Arg 2 is ' . $args[2]);
+
+
             if (!empty($args[1])) {
                 $translate_in = $this->existingLanguages($args[1]);
             } else {
