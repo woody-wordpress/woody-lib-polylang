@@ -19,7 +19,7 @@ final class Polylang extends Module
 
     public function initialize(ParameterManager $parameters, Container $container)
     {
-        define('WOODY_LIB_POLYLANG_VERSION', '1.2.1');
+        define('WOODY_LIB_POLYLANG_VERSION', '1.2.2');
         define('WOODY_LIB_POLYLANG_ROOT', __FILE__);
         define('WOODY_LIB_POLYLANG_DIR_ROOT', dirname(WOODY_LIB_POLYLANG_ROOT));
         define('WOODY_LIB_POLYLANG_URL', basename(__DIR__) . '/Resources/Assets');
@@ -689,6 +689,13 @@ final class Polylang extends Module
             $translate_from = !empty($args[0]) ? $args[0] : '' ;
             $translate_in = [] ;
 
+            // TODO: Add filter to push new post types
+            if (!empty($args[2]) && $args[2] == 'roadbook') {
+                $post_types = ['woody_rdbk_leaflets', 'woody_rdbk_feeds'];
+            } else {
+                $post_types = ['page'];
+            }
+
             if (!empty($args[1])) {
                 $translate_in = $this->existingLanguages($args[1]);
             } else {
@@ -700,14 +707,14 @@ final class Polylang extends Module
                     'post_status' => 'any',
                     'post_parent' => 0,
                     'posts_per_page' => -1,
-                    'post_type' => 'page',
+                    'post_type' => $post_types,
                     'lang' => $translate_from,
                     'orderby' => 'menu_order',
                     'order' => 'ASC'
                 );
 
                 $query_result = new \WP_Query($args);
-
+                output_log('Found ' . $query_result->found_posts . ' posts in ' . $translate_from . ' to translate in ' . implode(',', $translate_in));
                 if (!empty($query_result->posts)) {
                     foreach ($translate_in as $lang) {
                         // Do not translate language into the same language
