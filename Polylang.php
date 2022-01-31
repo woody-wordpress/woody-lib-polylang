@@ -19,7 +19,7 @@ final class Polylang extends Module
 
     public function initialize(ParameterManager $parameters, Container $container)
     {
-        define('WOODY_LIB_POLYLANG_VERSION', '1.2.2');
+        define('WOODY_LIB_POLYLANG_VERSION', '1.2.3');
         define('WOODY_LIB_POLYLANG_ROOT', __FILE__);
         define('WOODY_LIB_POLYLANG_DIR_ROOT', dirname(WOODY_LIB_POLYLANG_ROOT));
         define('WOODY_LIB_POLYLANG_URL', basename(__DIR__) . '/Resources/Assets');
@@ -666,13 +666,19 @@ final class Polylang extends Module
         return $fields;
     }
 
+    // Permet de créer une page avec suffice de langue dans le titre et le permalien lors de la traduction de pages en masse
     public function modifyPostName($post_id, $tr_id, $lang)
     {
-        wp_update_post([
-            'ID' => $tr_id,
-            'post_title' => get_the_title($post_id) . ' - ' . strtoupper($lang),
-            'post_name' => ''
-        ]);
+        // Lorsque 2 posts sont synchronisés, la valeur current_user_can('edit_post', $tr_id) == true
+        // Dans ce cas, on ne veut surtout pas mettre à jour le titre de la page
+        // car selon la langue courante lors de la mise à jour, les suffixes de langue se rajoutent indéfiniment (Titre - lang1 - lang2 - lang-1)
+        if (!current_user_can('edit_post', $tr_id)) {
+            wp_update_post([
+                'ID' => $tr_id,
+                'post_title' => get_the_title($post_id) . ' - ' . strtoupper($lang),
+                'post_name' => ''
+            ]);
+        }
     }
 
     public function woodyDefaultLangPostTitle($post_id)
