@@ -19,7 +19,7 @@ final class Polylang extends Module
 
     public function initialize(ParameterManager $parameters, Container $container)
     {
-        define('WOODY_LIB_POLYLANG_VERSION', '1.2.3');
+        define('WOODY_LIB_POLYLANG_VERSION', '1.2.4');
         define('WOODY_LIB_POLYLANG_ROOT', __FILE__);
         define('WOODY_LIB_POLYLANG_DIR_ROOT', dirname(WOODY_LIB_POLYLANG_ROOT));
         define('WOODY_LIB_POLYLANG_URL', basename(__DIR__) . '/Resources/Assets');
@@ -66,7 +66,7 @@ final class Polylang extends Module
         add_filter('woody_pll_current_season', [$this, 'woodyPllCurrentSeason'], 10);
 
         // Retourne la langue du post mais en se basant sur les locales
-        add_filter('woody_pll_get_post_language', [$this, 'woodyPllGetPostLanguage'], 10);
+        add_filter('woody_pll_get_post_language', [$this, 'woodyPllGetPostLanguage'], 10, 1);
 
         // Retourne le code lang (issue de la locale) à partir du slug
         add_filter('woody_pll_get_lang_by_slug', [$this, 'woodyPllGetLangBySlug'], 10);
