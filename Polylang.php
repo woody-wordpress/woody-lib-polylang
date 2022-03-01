@@ -66,7 +66,7 @@ final class Polylang extends Module
         add_filter('woody_pll_current_season', [$this, 'woodyPllCurrentSeason'], 10);
 
         // Retourne la langue du post mais en se basant sur les locales
-        add_filter('woody_pll_get_post_language', [$this, 'woodyPllGetPostLanguage'], 10);
+        add_filter('woody_pll_get_post_language', [$this, 'woodyPllGetPostLanguage'], 10, 1);
 
         // Retourne le code lang (issue de la locale) à partir du slug
         add_filter('woody_pll_get_lang_by_slug', [$this, 'woodyPllGetLangBySlug'], 10);
