@@ -19,7 +19,7 @@ final class Polylang extends Module
 
     public function initialize(ParameterManager $parameters, Container $container)
     {
-        define('WOODY_LIB_POLYLANG_VERSION', '1.2.5');
+        define('WOODY_LIB_POLYLANG_VERSION', '1.2.6');
         define('WOODY_LIB_POLYLANG_ROOT', __FILE__);
         define('WOODY_LIB_POLYLANG_DIR_ROOT', dirname(WOODY_LIB_POLYLANG_ROOT));
         define('WOODY_LIB_POLYLANG_URL', basename(__DIR__) . '/Resources/Assets');
@@ -67,6 +67,9 @@ final class Polylang extends Module
 
         // Retourne la langue du post mais en se basant sur les locales
         add_filter('woody_pll_get_post_language', [$this, 'woodyPllGetPostLanguage'], 10, 1);
+
+        // Retourne la langue du post mais en se basant sur les locales
+        add_filter('woody_pll_get_post_season', [$this, 'woodyPllGetPostSeason'], 10, 1);
 
         // Retourne le code lang (issue de la locale) à partir du slug
         add_filter('woody_pll_get_lang_by_slug', [$this, 'woodyPllGetLangBySlug'], 10);
@@ -446,6 +449,17 @@ final class Polylang extends Module
         if (function_exists('pll_get_post_language') && !empty($post_id)) {
             $locale = pll_get_post_language($post_id, 'locale');
             return $this->locale_to_lang($locale);
+        }
+    }
+
+    public function woodyPllGetPostSeason($post_id = null)
+    {
+        $woody_lang_seasons = get_option('woody_lang_seasons', []);
+        if (function_exists('pll_get_post_language') && !empty($post_id) && !empty($woody_lang_seasons)) {
+            $slug = pll_get_post_language($post_id);
+            if (!empty($woody_lang_seasons[$slug]) && $woody_lang_seasons[$slug] != 'default') {
+                return $woody_lang_seasons[$slug];
+            }
         }
     }
 
