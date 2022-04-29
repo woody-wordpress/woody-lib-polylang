@@ -11,6 +11,7 @@ namespace Woody\Lib\Polylang;
 use Woody\App\Container;
 use Woody\Modules\Module;
 use Woody\Services\ParameterManager;
+use Woody\Lib\Polylang\Commands\TranslateCommands;
 
 final class Polylang extends Module
 {
@@ -19,7 +20,7 @@ final class Polylang extends Module
 
     public function initialize(ParameterManager $parameters, Container $container)
     {
-        define('WOODY_LIB_POLYLANG_VERSION', '1.2.6');
+        define('WOODY_LIB_POLYLANG_VERSION', '2.0.0');
         define('WOODY_LIB_POLYLANG_ROOT', __FILE__);
         define('WOODY_LIB_POLYLANG_DIR_ROOT', dirname(WOODY_LIB_POLYLANG_ROOT));
         define('WOODY_LIB_POLYLANG_URL', basename(__DIR__) . '/Resources/Assets');
@@ -108,10 +109,11 @@ final class Polylang extends Module
 
         // Override pll sync
         add_filter('pll_sync_post_fields', [$this, 'unsetSyncPostURL'], 10, 4);
-        add_action('pll_post_synchronized', [$this, 'modifyPostName'], 10, 3);
+    }
 
-        // Translate posts
-        \WP_CLI::add_command('woody:translate_posts', [$this, 'translatePostsWpcli']);
+    public function registerCommands()
+    {
+        \WP_CLI::add_command('woody:translate', new TranslateCommands($this->container));
     }
 
     public function metaLangUsagesRedirect()
@@ -672,6 +674,7 @@ final class Polylang extends Module
         return $this->addonAssetPath('woody-lib-polylang', 'img/flags/' . $this->seasonsFlags[$code]['img'] . '.png');
     }
 
+    // Filters the post fields to synchronize when synchronizing posts
     public function unsetSyncPostURL($fields, $post_id, $lang, $save_group)
     {
         unset($fields['post_name']);
@@ -680,122 +683,8 @@ final class Polylang extends Module
         return $fields;
     }
 
-    // Permet de créer une page avec suffice de langue dans le titre et le permalien lors de la traduction de pages en masse
-    public function modifyPostName($post_id, $tr_id, $lang)
-    {
-        // Lorsque 2 posts sont synchronisés, la valeur current_user_can('edit_post', $tr_id) == true
-        // Dans ce cas, on ne veut surtout pas mettre à jour le titre de la page
-        // car selon la langue courante lors de la mise à jour, les suffixes de langue se rajoutent indéfiniment (Titre - lang1 - lang2 - lang-1)
-        if (!current_user_can('edit_post', $tr_id)) {
-            wp_update_post([
-                'ID' => $tr_id,
-                'post_title' => get_the_title($post_id) . ' - ' . strtoupper($lang),
-                'post_name' => ''
-            ]);
-        }
-    }
-
     public function woodyDefaultLangPostTitle($post_id)
     {
         return get_the_title(pll_get_post($post_id, $this->woodyPllDefaultLang()));
-    }
-
-    /**
-     * Translate posts
-     */
-    public function translatePostsWpcli($args, $assoc_args)
-    {
-        if (!empty($args)) {
-            $translate_from = !empty($args[0]) ? $args[0] : '' ;
-            $translate_in = [] ;
-
-            // TODO: Add filter to push new post types
-            if (!empty($args[2]) && $args[2] == 'roadbook') {
-                $post_types = ['woody_rdbk_leaflets', 'woody_rdbk_feeds'];
-            } else {
-                $post_types = ['page'];
-            }
-
-            if (!empty($args[1])) {
-                $translate_in = $this->existingLanguages($args[1]);
-            } else {
-                output_error('Missing "translate_in" argument. Use : WP_SITE_KEY=<sitename> wp woody:translate_posts <translate from> <translate_in_lang>');
-            }
-
-            if (!empty($translate_from) && !empty($translate_in)) {
-                $args = array(
-                    'post_status' => 'any',
-                    'post_parent' => 0,
-                    'posts_per_page' => -1,
-                    'post_type' => $post_types,
-                    'lang' => $translate_from,
-                    'orderby' => 'menu_order',
-                    'order' => 'ASC'
-                );
-
-                $query_result = new \WP_Query($args);
-                output_log('Found ' . $query_result->found_posts . ' posts in ' . $translate_from . ' to translate in ' . implode(',', $translate_in));
-                if (!empty($query_result->posts)) {
-                    foreach ($translate_in as $lang) {
-                        // Do not translate language into the same language
-                        if ($lang != $translate_from) {
-                            foreach ($query_result->posts as $post) {
-                                $this->translatePosts($post, $translate_from, $lang);
-                            }
-                            output_success('Posts translated successfully, ' . $query_result->found_posts . ' posts translated in '. $lang);
-                        } else {
-                            output_warning('Do not translate a language into the same language.');
-                        }
-                    }
-                } else {
-                    output_error('0 post to translate. Make sure that this language ('.$translate_from.') exists, and that pages are associated with it.');
-                }
-            } else {
-                output_error('Missing or invalid arguments.');
-            }
-        } else {
-            output_error('Missing or invalid arguments.');
-        }
-    }
-
-    private function existingLanguages($args)
-    {
-        $translate_in = explode(',', $args) ;
-        $languages = pll_languages_list(array('hide_empty' => 0));
-        $return = !empty(array_intersect($languages, $translate_in)) ? array_intersect($languages, $translate_in) : [];
-
-        return $return;
-    }
-
-    /**
-     * Recursive function that translate firstly the parent post, and then try to translate children if they exists
-     */
-    private function translatePosts($post_parent, $translate_from, $lang)
-    {
-        // Check if translated post already exists
-        $result = pll_get_post($post_parent->ID, $lang);
-
-        if ($result) {
-            output_log('Post '. $post_parent->ID . ' already translated in '. $lang . '. Post ID : '. $result);
-        } else {
-            $new_post = PLL()->sync_post->copy_post($post_parent->ID, $lang, false);
-        }
-
-        $args = array(
-            'post_status' => 'any',
-            'post_parent' => $post_parent->ID,
-            'posts_per_page' => -1,
-            'post_type' => 'page',
-            'lang' => $translate_from,
-            'orderby' => 'menu_order',
-            'order' => 'ASC'
-        );
-
-        $query_result = new \WP_Query($args);
-        if (!empty($query_result->posts)) {
-            foreach ($query_result->posts as $post) {
-                $this->translatePosts($post, $translate_from, $lang);
-            }
-        }
     }
 }
