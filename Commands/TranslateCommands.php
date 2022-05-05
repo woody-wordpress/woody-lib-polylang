@@ -21,13 +21,7 @@ class TranslateCommands
         } else {
             $post_id = $assoc_args['post'];
             $post = get_post($post_id);
-        }
-
-        // Get source
-        if (empty($assoc_args['source'])) {
-            output_error('Argument manquant ou invalide "--source=fr"');
-        } else {
-            $translate_from = current($this->existingLanguages($assoc_args['source']));
+            $translate_from = pll_get_post_language($post_id);
         }
 
         // Get target
@@ -35,14 +29,6 @@ class TranslateCommands
             output_error('Argument manquant ou invalide "--target=en,de"');
         } else {
             $translate_in = $this->existingLanguages($assoc_args['target']);
-        }
-
-        // Get addon
-        // TODO: Add filter to push new post types
-        if (!empty($assoc_args['addon']) && $assoc_args['addon'] == 'roadbook') {
-            $post_types = ['woody_rdbk_leaflets', 'woody_rdbk_feeds'];
-        } else {
-            $post_types = ['page'];
         }
 
         // Get auto_translate deepL
@@ -56,7 +42,7 @@ class TranslateCommands
             foreach ($translate_in as $lang) {
                 // Do not translate language into the same language
                 if ($lang != $translate_from) {
-                    $this->translatePosts($post, $translate_from, $lang, $auto_translate);
+                    $this->translatePost($post, $translate_from, $lang, $auto_translate);
                     output_success('Post traduit avec succès');
                 } else {
                     output_warning('Ne pas traduire dans la même langue');
@@ -137,7 +123,7 @@ class TranslateCommands
     /**
      * Recursive function that translate firstly the parent post, and then try to translate children if they exists
      */
-    private function translatePosts($post, $translate_from, $lang, $auto_translate = false)
+    private function translatePost($post, $translate_from, $lang, $auto_translate = false)
     {
         // Check if translated post already exists
         $result = pll_get_post($post->ID, $lang);
@@ -166,6 +152,11 @@ class TranslateCommands
                 do_action('save_post', $new_post_id, $new_post, true);
             }
         }
+    }
+
+    private function translatePosts($post, $translate_from, $lang, $auto_translate = false)
+    {
+        $this->translatePost($post, $translate_from, $lang, $auto_translate);
 
         $args = array(
             'post_status' => 'any',
