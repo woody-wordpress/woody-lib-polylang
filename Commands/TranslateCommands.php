@@ -11,6 +11,7 @@ namespace Woody\Lib\Polylang\Commands;
 // WP_SITE_KEY=superot wp woody:translate post --post=1234 --target=en,de --deepl=true
 // WP_SITE_KEY=superot wp woody:translate posts --source=fr --target=en,de --addon=roadbook --deepl=true
 // WP_SITE_KEY=superot wp woody:translate terms --source=fr --target=en,de --tax=themes,places --deepl=true
+// WP_SITE_KEY=superot wp woody:translate fields
 
 class TranslateCommands
 {
@@ -19,7 +20,7 @@ class TranslateCommands
         // Get post_id
         if (empty($assoc_args['post'])) {
             output_error('Argument manquant ou invalide "--post=1234"');
-        } else {
+        } elseif (is_numeric($assoc_args['post'])) {
             $post_id = $assoc_args['post'];
             $post = get_post($post_id);
             $translate_from = pll_get_post_language($post_id);
@@ -88,7 +89,7 @@ class TranslateCommands
         }
 
         if (!empty($translate_from) && !empty($translate_to)) {
-            $args = array(
+            $args = [
                 'post_status' => 'any',
                 'post_parent' => 0,
                 'posts_per_page' => -1,
@@ -96,7 +97,7 @@ class TranslateCommands
                 'lang' => $translate_from,
                 'orderby' => 'menu_order',
                 'order' => 'ASC'
-            );
+            ];
 
             $query_result = new \WP_Query($args);
             output_h1(sprintf('%s posts trouvés en %s à traduire vers %s', $query_result->found_posts, $translate_from, implode(',', $translate_to)));
@@ -121,7 +122,7 @@ class TranslateCommands
     private function existingLanguages($langs)
     {
         $langs = explode(',', $langs) ;
-        $languages = pll_languages_list(array('hide_empty' => 0));
+        $languages = pll_languages_list(['hide_empty' => 0]);
         return !empty(array_intersect($languages, $langs)) ? array_intersect($languages, $langs) : [];
     }
 
@@ -163,7 +164,7 @@ class TranslateCommands
     {
         $this->translatePost($post, $translate_from, $lang, $auto_translate);
 
-        $args = array(
+        $args = [
             'post_status' => 'any',
             'post_parent' => $post->ID,
             'posts_per_page' => -1,
@@ -171,7 +172,7 @@ class TranslateCommands
             'lang' => $translate_from,
             'orderby' => 'menu_order',
             'order' => 'ASC'
-        );
+        ];
 
         $query_result = new \WP_Query($args);
         if (!empty($query_result->posts)) {
@@ -241,12 +242,12 @@ class TranslateCommands
 
         foreach ($taxonomies as $taxonomy) {
             output_h2(sprintf('Traduction des termes de la taxonomie %s', $taxonomy));
-            $terms = get_terms(array(
+            $terms = get_terms([
                 'taxonomy' => $taxonomy,
                 'hide_empty' => false,
                 'parent' => $parent,
                 'lang' => $translate_from
-            ));
+            ]);
 
             if (!empty($terms)) {
                 foreach ($terms as $term) {
@@ -267,6 +268,84 @@ class TranslateCommands
 
                     // Traduire les enfants
                     $this->translateTerms($taxonomy, $translate_from, $translate_to, $auto_translate, $term->term_id);
+                }
+            }
+        }
+    }
+
+    public function fields($args, $assoc_args)
+    {
+        // Get target
+        if (empty($assoc_args['source'])) {
+            $source = 'fr';
+        } else {
+            $source = $this->existingLanguages($assoc_args['source']);
+        }
+
+        // Get target
+        if (!empty($assoc_args['post']) && is_numeric($assoc_args['post'])) {
+            $post_id = $assoc_args['post'];
+            $post_metas = $this->getTranslateFields($post_id, $source);
+        } else {
+            // Get target
+            if (empty($assoc_args['lang'])) {
+                output_error('Argument manquant ou invalide "--lang=en"');
+            } else {
+                $lang = $this->existingLanguages($assoc_args['lang']);
+            }
+
+            // Get target
+            if (empty($assoc_args['types'])) {
+                $post_types = (strpos($assoc_args['types'], ',') !== false) ? explode(',', $assoc_args['types']) : $assoc_args['types'];
+            } elseif (!empty($assoc_args['types']) && $assoc_args['types'] == 'roadbook') {
+                $post_types = ['woody_rdbk_leaflets', 'woody_rdbk_feeds'];
+            } else {
+                $post_types = ['page', 'profile'];
+            }
+
+            $args = [
+                'post_status' => 'any',
+                'post_parent' => 0,
+                'posts_per_page' => -1,
+                'lang' => $lang,
+                'post_type' => $post_types,
+                'orderby' => 'menu_order',
+                'order' => 'ASC'
+            ];
+
+            // $query_result = new \WP_Query($args);
+            // output_h1(sprintf('%s posts trouvés en %s à corriger', $query_result->found_posts, $lang));
+            // if (!empty($query_result->posts)) {
+            //     foreach ($query_result->posts as $post) {
+            //         $post_metas = $this->getTranslateFields($post->ID, $source);
+            //         print_r($post_metas);
+            //         exit();
+            //     }
+            //     output_success('Posts traduits avec succès, ' . $query_result->found_posts . ' posts traduits vers '. $lang);
+            // } else {
+            //     output_error('0 post à traduire. Etes-vous certain que la langue ('.$translate_from.') existe, et que des pages existent dans cette langue.');
+            // }
+        }
+    }
+
+    private function getTranslateFields($post_id, $source)
+    {
+        $post_id_from = pll_get_post($post_id, $source);
+        $post_metas = get_post_meta($post_id);
+        $lang = pll_get_post_language($post_id);
+        if (!empty($post_metas) && !empty($lang)) {
+            $pll_acf = new \PLL_ACF_Auto_Translate();
+            foreach ($post_metas as $key => $value) {
+                if (substr($key, 0, 1) != '_') {
+                    $new_value = $pll_acf->translate_meta($value, $key, $lang, $post_id_from, $post_id);
+
+                    // Si différent on met à jour
+                    $value = (is_array($value)) ? current($value) : $value;
+                    $new_value = (is_array($new_value)) ? current($new_value) : $new_value;
+                    if (!empty($value) && ((!empty($new_value) && $value != $new_value) || empty($new_value))) {
+                        //update_post_meta($post_id, $key, $new_value);
+                        output_success(sprintf('%s (%s > %s)', $key, $value, $new_value));
+                    }
                 }
             }
         }
