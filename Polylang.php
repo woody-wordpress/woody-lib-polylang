@@ -240,9 +240,7 @@ final class Polylang extends Module
             'attachment_hashtags' => 'attachment_hashtags',
             'attachment_categories' => 'attachment_categories',
         ];
-
-        $taxonomies = array_merge($custom_taxs, $taxonomies);
-        return $taxonomies;
+        return array_merge($custom_taxs, $taxonomies);
     }
 
     // --------------------------------
@@ -266,8 +264,6 @@ final class Polylang extends Module
 
     public function woodyPllLanguagesList($current_season = null)
     {
-        $return = [];
-
         if (!function_exists('pll_languages_list')) {
             return;
         }
@@ -364,7 +360,7 @@ final class Polylang extends Module
                 return;
             }
 
-            foreach ($languages as $key => $language) {
+            foreach ($languages as $language) {
                 if ($language['slug'] == $current_lang) {
                     $current_language = $language;
                     break;
@@ -582,7 +578,7 @@ final class Polylang extends Module
         $currentSeasonLangs = $this->woodyPllLanguagesList(pll_current_language());
         if (!empty($currentSeasonLangs)) {
             $hreflangs = [];
-            foreach ($currentSeasonLangs as $key => $langObject) {
+            foreach ($currentSeasonLangs as $langObject) {
 
                 // On exclut les langues non actives. PLL n'exclut pas la langue courante, donc on fait de même
                 //(Google recommends to include self link https://support.google.com/webmasters/answer/189077?hl=en)
@@ -626,7 +622,7 @@ final class Polylang extends Module
             } else {
                 // Si le site est alias, on rajoute les langues inactives au robots.txt
                 $languages = pll_languages_list();
-                foreach ($languages as $key => $slug) {
+                foreach ($languages as $slug) {
                     if (!in_array($slug, $woody_lang_enable)) {
                         $output[] = 'Disallow: /' . $slug . '/';
                     }
@@ -648,7 +644,7 @@ final class Polylang extends Module
 
     private function getSeasonsFlags()
     {
-        $seasons = [
+        return [
             'ad'   => ['name' => __('Français (Hiver)', 'polylang'), 'img' => 'fr_hiver'],
             'ae'   => ['name' => __('Français (Eté)', 'polylang'), 'img' => 'fr_ete'],
             'af'   => ['name' => __('Anglais (Hiver)', 'polylang'), 'img' => 'en_hiver'],
@@ -665,8 +661,6 @@ final class Polylang extends Module
             'au'   => ['name' => __('Portugais (Eté)', 'polylang'), 'img' => 'pt_ete'],
             'aw'   => ['name' => __('Breton', 'polylang'), 'img' => 'br']
         ];
-
-        return $seasons;
     }
 
     private function getSeasonFlagUrl($code)
