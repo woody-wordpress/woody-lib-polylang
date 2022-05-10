@@ -13,11 +13,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Tabs
-if (!empty(filter_input(INPUT_GET, 'tab'))) {
-    $active_tab = filter_input(INPUT_GET, 'tab');
-} else {
-    $active_tab = 'enable_lang';
-}
+$active_tab = empty(filter_input(INPUT_GET, 'tab')) ? 'enable_lang' : filter_input(INPUT_GET, 'tab');
 
 // https://doc.nette.org/en/2.4/forms
 $form = new Form();
@@ -28,11 +24,7 @@ switch ($active_tab) {
         $woody_lang_enable = get_option('woody_lang_enable', []);
 
         foreach ($languages as $language) {
-            if (in_array($language->slug, $woody_lang_enable)) {
-                $enable = true;
-            } else {
-                $enable = false;
-            }
+            $enable = in_array($language->slug, $woody_lang_enable);
 
             $form->addCheckbox($language->slug, $language->name)
                 ->setDefaultValue($enable);
@@ -60,11 +52,7 @@ switch ($active_tab) {
 
         $form->addGroup('Saisonnalité des langues');
         foreach ($languages as $language) {
-            if (array_key_exists($language->slug, $woody_lang_seasons)) {
-                $season = $woody_lang_seasons[$language->slug];
-            } else {
-                $season = 'default';
-            }
+            $season = array_key_exists($language->slug, $woody_lang_seasons) ? $woody_lang_seasons[$language->slug] : 'default';
 
             $seasons_choices = [
                 'default' => 'Pas de saison',
@@ -116,11 +104,7 @@ switch ($active_tab) {
                 continue;
             }
 
-            if (in_array($language->slug, $woody_hawwwai_lang_disable)) {
-                $enable = true;
-            } else {
-                $enable = false;
-            }
+            $enable = in_array($language->slug, $woody_hawwwai_lang_disable);
 
             $form->addCheckbox($language->slug, $language->name)
                 ->setDefaultValue($enable);

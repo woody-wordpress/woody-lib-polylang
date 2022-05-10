@@ -148,7 +148,7 @@ class TranslateCommands
     {
         $langs = explode(',', $langs) ;
         $languages = pll_languages_list(['hide_empty' => 0]);
-        return !empty(array_intersect($languages, $langs)) ? array_intersect($languages, $langs) : [];
+        return empty(array_intersect($languages, $langs)) ? [] : array_intersect($languages, $langs);
     }
 
     /**
@@ -234,11 +234,7 @@ class TranslateCommands
         }
 
         // Get source
-        if (empty($assoc_args['tax'])) {
-            $taxonomies = ['themes', 'places', 'seasons'];
-        } else {
-            $taxonomies = explode(',', $assoc_args['tax']);
-        }
+        $taxonomies = empty($assoc_args['tax']) ? ['themes', 'places', 'seasons'] : explode(',', $assoc_args['tax']);
 
         // Get auto_translate deepL
         if (!empty($assoc_args['deepl']) && filter_var($assoc_args['deepl'], FILTER_VALIDATE_BOOLEAN) == true) {
@@ -307,11 +303,7 @@ class TranslateCommands
     public function fields($args, $assoc_args)
     {
         // Get target
-        if (empty($assoc_args['source'])) {
-            $source = 'fr';
-        } else {
-            $source = $this->existingLanguages($assoc_args['source']);
-        }
+        $source = empty($assoc_args['source']) ? 'fr' : $this->existingLanguages($assoc_args['source']);
 
         // Get target
         if (!empty($assoc_args['post']) && is_numeric($assoc_args['post'])) {
