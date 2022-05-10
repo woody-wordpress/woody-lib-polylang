@@ -6,8 +6,9 @@
  */
 
 if (!defined('ABSPATH')) {
+    // Exit if accessed directly
     exit;
-} // Exit if accessed directly
+}
 ?>
 
 <div class="woody-polylang-container">

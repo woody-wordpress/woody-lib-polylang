@@ -16,6 +16,7 @@ namespace Woody\Lib\Polylang\Commands;
 class TranslateCommands
 {
     private $total;
+
     private $count;
 
     public function __construct()
@@ -259,6 +260,7 @@ class TranslateCommands
                             $this->translateTerms($taxonomy, $translate_from, $lang, $auto_translate);
                         }
                     }
+
                     output_success('Taxonomy traduite avec succès');
                 } else {
                     output_warning('Ne pas traduire dans la même langue');
@@ -366,6 +368,7 @@ class TranslateCommands
                 foreach ($query_result->posts as $post) {
                     $this->translateFields($post->ID, $source);
                 }
+
                 output_success('Posts corrigés avec succès');
             } else {
                 output_error(sprintf('0 post à corriger. Etes-vous certain que la langue (%s) existe, et que des pages existent dans cette langue.', $lang));

@@ -16,6 +16,7 @@ use Woody\Lib\Polylang\Commands\TranslateCommands;
 final class Polylang extends Module
 {
     protected static $key = 'woody_lib_polylang';
+
     private $seasonsFlags;
 
     public function initialize(ParameterManager $parameters, Container $container)
@@ -127,7 +128,7 @@ final class Polylang extends Module
                     if ($current_lang != false && !in_array($addon_key, $this->langUsages[$current_lang])) {
                         foreach ($addon['posts_types'] as $post_type) {
                             global $typenow;
-                            $current_page = preg_replace('/&lang=(.*)/', '', $_SERVER['REQUEST_URI']);
+                            $current_page = preg_replace('#&lang=(.*)#', '', $_SERVER['REQUEST_URI']);
                             if ($typenow == $post_type) {
                                 if (!in_array($typenow, $this->langUsages[$addon['default_lang']])) {
                                     wp_redirect('/wp/wp-admin', 301, 'Meta Lang Usage');
@@ -406,6 +407,7 @@ final class Polylang extends Module
                 }
             }
         }
+
         return PLL_DEFAULT_LANG;
     }
 

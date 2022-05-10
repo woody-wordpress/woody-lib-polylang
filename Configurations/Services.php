@@ -19,6 +19,7 @@ class Services
         if (!self::$definitions) {
             self::$definitions = self::definitions();
         }
+
         return self::$definitions;
     }
 }
