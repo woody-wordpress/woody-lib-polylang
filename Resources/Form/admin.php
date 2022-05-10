@@ -8,18 +8,15 @@
 use Nette\Forms\Form;
 
 if (!defined('ABSPATH')) {
+    // Exit if accessed directly
     exit;
-} // Exit if accessed directly
-
-// Tabs
-if (!empty(filter_input(INPUT_GET, 'tab'))) {
-    $active_tab = filter_input(INPUT_GET, 'tab');
-} else {
-    $active_tab = 'enable_lang';
 }
 
+// Tabs
+$active_tab = empty(filter_input(INPUT_GET, 'tab')) ? 'enable_lang' : filter_input(INPUT_GET, 'tab');
+
 // https://doc.nette.org/en/2.4/forms
-$form = new Form;
+$form = new Form();
 
 $custom_tabs = apply_filters("polylang_custom_tabs", []);
 switch ($active_tab) {
@@ -27,11 +24,7 @@ switch ($active_tab) {
         $woody_lang_enable = get_option('woody_lang_enable', []);
 
         foreach ($languages as $language) {
-            if (in_array($language->slug, $woody_lang_enable)) {
-                $enable = true;
-            } else {
-                $enable = false;
-            }
+            $enable = in_array($language->slug, $woody_lang_enable);
 
             $form->addCheckbox($language->slug, $language->name)
                 ->setDefaultValue($enable);
@@ -47,8 +40,10 @@ switch ($active_tab) {
                     $options[] = $lang;
                 }
             }
+
             update_option('woody_lang_enable', $options);
         }
+
         break;
 
     case 'seasons_lang':
@@ -57,11 +52,7 @@ switch ($active_tab) {
 
         $form->addGroup('Saisonnalité des langues');
         foreach ($languages as $language) {
-            if (array_key_exists($language->slug, $woody_lang_seasons)) {
-                $season = $woody_lang_seasons[$language->slug];
-            } else {
-                $season = 'default';
-            }
+            $season = array_key_exists($language->slug, $woody_lang_seasons) ? $woody_lang_seasons[$language->slug] : 'default';
 
             $seasons_choices = [
                 'default' => 'Pas de saison',
@@ -84,7 +75,7 @@ switch ($active_tab) {
 
         $form->addGroup('Langue prioritaire pour le calcul des canoniques');
         $form->addRadioList('priority', 'Saison prioritaire : ', [
-            'default' => 'Le site n\'a pas de saison',
+            'default' => "Le site n'a pas de saison",
             'hiver' => 'Hiver',
             'ete' => 'Été',
         ])
@@ -102,6 +93,7 @@ switch ($active_tab) {
             update_option('woody_season_priority', $priority);
             update_option('woody_lang_seasons', $options);
         }
+
         break;
 
     case 'hawwwai_lang':
@@ -112,11 +104,7 @@ switch ($active_tab) {
                 continue;
             }
 
-            if (in_array($language->slug, $woody_hawwwai_lang_disable)) {
-                $enable = true;
-            } else {
-                $enable = false;
-            }
+            $enable = in_array($language->slug, $woody_hawwwai_lang_disable);
 
             $form->addCheckbox($language->slug, $language->name)
                 ->setDefaultValue($enable);
@@ -132,8 +120,10 @@ switch ($active_tab) {
                     $options[] = $lang;
                 }
             }
+
             update_option('woody_hawwwai_lang_disable', $options);
         }
+
         break;
 
     case 'usage_lang':
@@ -148,13 +138,14 @@ switch ($active_tab) {
                     ->setDefaultValue(!empty($meta_lang_usages_options[$language->slug]) && in_array($meta_lang_usage_key, $meta_lang_usages_options[$language->slug]));
             }
         }
+
         $form->addSubmit('save', 'Enregistrer')
             ->setHtmlAttribute('class', 'button button-primary');
 
         if ($form->isSuccess()) {
             $options = [];
             foreach ($form->getValues() as $lang_usage => $lang_usage_value) {
-                list($lang, $usage) = explode('_', $lang_usage);
+                [$lang, $usage] = explode('_', $lang_usage);
                 if ($lang_usage_value) {
                     $options[$lang][] = $usage;
                 } elseif (!isset($options[$lang])) {
@@ -171,14 +162,16 @@ switch ($active_tab) {
                 $form->addError($update['message']);
             }
         }
+
         break;
 
     default:
         foreach ($custom_tabs as $tab_slug => $tab_title) {
             if ($active_tab == $tab_slug) {
-                $form = apply_filters("custom_tab_form_$tab_slug", $form);
+                $form = apply_filters(sprintf('custom_tab_form_%s', $tab_slug), $form);
             }
         }
+
         break;
 }
 

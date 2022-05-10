@@ -15,10 +15,11 @@ use Woody\Lib\Polylang\Commands\TranslateCommands;
 
 final class Polylang extends Module
 {
-    protected static $key = 'woody_lib_polylang';
     private $seasonsFlags;
 
-    public function initialize(ParameterManager $parameters, Container $container)
+    protected static $key = 'woody_lib_polylang';
+
+    public function initialize(ParameterManager $parameterManager, Container $container)
     {
         define('WOODY_LIB_POLYLANG_VERSION', '2.2.0');
         define('WOODY_LIB_POLYLANG_ROOT', __FILE__);
@@ -28,11 +29,7 @@ final class Polylang extends Module
         // Define SeasonsFlags
         $this->seasonsFlags = $this->getSeasonsFlags();
 
-        global $pagenow;
-        $this->pageNow = $pagenow;
-        $this->langUsages = get_option('meta_lang_usages');
-
-        parent::initialize($parameters, $container);
+        parent::initialize($parameterManager, $container);
     }
 
     public static function dependencyServiceDefinitions()
@@ -118,18 +115,20 @@ final class Polylang extends Module
 
     public function metaLangUsagesRedirect()
     {
-        if ($this->pageNow == 'post-new.php' || $this->pageNow == 'edit-tags.php') {
+        global $pagenow;
+        if ($pagenow == 'post-new.php' || $pagenow == 'edit-tags.php') {
             $current_lang = function_exists('pll_current_language') ? pll_current_language() : false;
             $addons = apply_filters('woody_meta_lang_usages_post_types', []);
 
-            if (!empty($this->langUsages) && !empty($addons)) {
+            $meta_lang_usages = get_option('meta_lang_usages');
+            if (!empty($meta_lang_usages) && !empty($addons)) {
                 foreach ($addons as $addon_key => $addon) {
-                    if ($current_lang != false && !in_array($addon_key, $this->langUsages[$current_lang])) {
+                    if ($current_lang != false && !in_array($addon_key, $meta_lang_usages[$current_lang])) {
                         foreach ($addon['posts_types'] as $post_type) {
                             global $typenow;
-                            $current_page = preg_replace('/&lang=(.*)/', '', $_SERVER['REQUEST_URI']);
+                            $current_page = preg_replace('#&lang=(.*)#', '', $_SERVER['REQUEST_URI']);
                             if ($typenow == $post_type) {
-                                if (!in_array($typenow, $this->langUsages[$addon['default_lang']])) {
+                                if (!in_array($typenow, $meta_lang_usages[$addon['default_lang']])) {
                                     wp_redirect('/wp/wp-admin', 301, 'Meta Lang Usage');
                                 } else {
                                     wp_redirect($current_page . '&lang=' . $addon['default_lang'], 301, 'Meta Lang Usage');
@@ -144,15 +143,19 @@ final class Polylang extends Module
 
     public function metaLangUsagesBodyClasses($classes)
     {
-        if (!empty($this->langUsages) && ($this->pageNow == 'post-new.php' || $this->pageNow == 'edit-tags.php' || $this->pageNow == 'edit.php')) {
-            $classes .= ' langs-to-hide';
-            $addons = apply_filters('woody_meta_lang_usages_post_types', []);
-            global $typenow;
-            foreach ($addons as $addon_key => $addon) {
-                if (in_array($typenow, $addon['posts_types'])) {
-                    foreach ($this->langUsages as $lang_code => $lang_usage) {
-                        if (!in_array($addon_key, $lang_usage)) {
-                            $classes .= ' hide-' . $lang_code;
+        global $pagenow;
+        if ($pagenow == 'post-new.php' || $pagenow == 'edit-tags.php' || $pagenow == 'edit.php') {
+            $meta_lang_usages = get_option('meta_lang_usages');
+            if (!empty($meta_lang_usages)) {
+                $classes .= ' langs-to-hide';
+                $addons = apply_filters('woody_meta_lang_usages_post_types', []);
+                global $typenow;
+                foreach ($addons as $addon_key => $addon) {
+                    if (in_array($typenow, $addon['posts_types'])) {
+                        foreach ($meta_lang_usages as $lang_code => $lang_usage) {
+                            if (!in_array($addon_key, $lang_usage)) {
+                                $classes .= ' hide-' . $lang_code;
+                            }
                         }
                     }
                 }
@@ -211,13 +214,11 @@ final class Polylang extends Module
 
     public function wpssocUserRedirectUrl($user_redirect_set)
     {
-        if (function_exists('pll_current_language')) {
-            if (strpos($user_redirect_set, 'wp-admin') !== false) {
-                if (strpos($user_redirect_set, '?') !== false) {
-                    $user_redirect_set .= '&lang=' . pll_current_language();
-                } else {
-                    $user_redirect_set .= '?lang=' . pll_current_language();
-                }
+        if (function_exists('pll_current_language') && strpos($user_redirect_set, 'wp-admin') !== false) {
+            if (strpos($user_redirect_set, '?') !== false) {
+                $user_redirect_set .= '&lang=' . pll_current_language();
+            } else {
+                $user_redirect_set .= '?lang=' . pll_current_language();
             }
         }
 
@@ -240,9 +241,7 @@ final class Polylang extends Module
             'attachment_hashtags' => 'attachment_hashtags',
             'attachment_categories' => 'attachment_categories',
         ];
-
-        $taxonomies = array_merge($custom_taxs, $taxonomies);
-        return $taxonomies;
+        return array_merge($custom_taxs, $taxonomies);
     }
 
     // --------------------------------
@@ -266,8 +265,6 @@ final class Polylang extends Module
 
     public function woodyPllLanguagesList($current_season = null)
     {
-        $return = [];
-
         if (!function_exists('pll_languages_list')) {
             return;
         }
@@ -321,7 +318,7 @@ final class Polylang extends Module
             if (!empty($woody_lang_seasons)) {
                 if ($current_season == 'auto') {
                     $current_lang = pll_current_language();
-                    $current_season = (!empty($woody_lang_seasons[$current_lang])) ? $woody_lang_seasons[$current_lang] : 'default';
+                    $current_season = (empty($woody_lang_seasons[$current_lang])) ? 'default' : $woody_lang_seasons[$current_lang];
                 }
 
                 $same_season_langs = [];
@@ -357,14 +354,14 @@ final class Polylang extends Module
             ));
 
             $current_lang = pll_current_language();
-            $season_current = !empty($woody_lang_seasons[$current_lang]) ? $woody_lang_seasons[$current_lang] : "default" ;
+            $season_current = empty($woody_lang_seasons[$current_lang]) ? "default" : $woody_lang_seasons[$current_lang] ;
 
             // On créé le switcher que si on a de la saisonnalité
             if ($season_current == 'default') {
                 return;
             }
 
-            foreach ($languages as $key => $language) {
+            foreach ($languages as $language) {
                 if ($language['slug'] == $current_lang) {
                     $current_language = $language;
                     break;
@@ -393,23 +390,21 @@ final class Polylang extends Module
 
     public function woodyPllDefaultLang($season = null)
     {
-        if (function_exists('pll_languages_list')) {
-            if (!empty($season)) {
-                $woody_lang_seasons = get_option('woody_lang_seasons', []);
-                $default_season = $woody_lang_seasons[PLL_DEFAULT_LANG];
-
-                if (empty($default_season) || $default_season == $season) {
-                    return PLL_DEFAULT_LANG;
-                } else {
-                    $languages = pll_languages_list(['fields' => '']);
-                    foreach ($languages as $language) {
-                        if ($language->locale == PLL_DEFAULT_LOCALE && $woody_lang_seasons[$language->slug] == $season) {
-                            return $language->slug;
-                        }
+        if (function_exists('pll_languages_list') && !empty($season)) {
+            $woody_lang_seasons = get_option('woody_lang_seasons', []);
+            $default_season = $woody_lang_seasons[PLL_DEFAULT_LANG];
+            if (empty($default_season) || $default_season == $season) {
+                return PLL_DEFAULT_LANG;
+            } else {
+                $languages = pll_languages_list(['fields' => '']);
+                foreach ($languages as $language) {
+                    if ($language->locale == PLL_DEFAULT_LOCALE && $woody_lang_seasons[$language->slug] == $season) {
+                        return $language->slug;
                     }
                 }
             }
         }
+
         return PLL_DEFAULT_LANG;
     }
 
@@ -423,7 +418,7 @@ final class Polylang extends Module
     {
         if (function_exists('pll_languages_list')) {
             if (empty($slug)) {
-                output_error(sprintf('Impossible de trouver la langue de ce slug vide'));
+                output_error('Impossible de trouver la langue de ce slug vide');
                 return;
             }
 
@@ -582,7 +577,7 @@ final class Polylang extends Module
         $currentSeasonLangs = $this->woodyPllLanguagesList(pll_current_language());
         if (!empty($currentSeasonLangs)) {
             $hreflangs = [];
-            foreach ($currentSeasonLangs as $key => $langObject) {
+            foreach ($currentSeasonLangs as $langObject) {
 
                 // On exclut les langues non actives. PLL n'exclut pas la langue courante, donc on fait de même
                 //(Google recommends to include self link https://support.google.com/webmasters/answer/189077?hl=en)
@@ -626,7 +621,7 @@ final class Polylang extends Module
             } else {
                 // Si le site est alias, on rajoute les langues inactives au robots.txt
                 $languages = pll_languages_list();
-                foreach ($languages as $key => $slug) {
+                foreach ($languages as $slug) {
                     if (!in_array($slug, $woody_lang_enable)) {
                         $output[] = 'Disallow: /' . $slug . '/';
                     }
@@ -648,7 +643,7 @@ final class Polylang extends Module
 
     private function getSeasonsFlags()
     {
-        $seasons = [
+        return [
             'ad'   => ['name' => __('Français (Hiver)', 'polylang'), 'img' => 'fr_hiver'],
             'ae'   => ['name' => __('Français (Eté)', 'polylang'), 'img' => 'fr_ete'],
             'af'   => ['name' => __('Anglais (Hiver)', 'polylang'), 'img' => 'en_hiver'],
@@ -665,8 +660,6 @@ final class Polylang extends Module
             'au'   => ['name' => __('Portugais (Eté)', 'polylang'), 'img' => 'pt_ete'],
             'aw'   => ['name' => __('Breton', 'polylang'), 'img' => 'br']
         ];
-
-        return $seasons;
     }
 
     private function getSeasonFlagUrl($code)
