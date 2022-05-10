@@ -19,7 +19,7 @@ final class Polylang extends Module
 
     protected static $key = 'woody_lib_polylang';
 
-    public function initialize(ParameterManager $parameters, Container $container)
+    public function initialize(ParameterManager $parameterManager, Container $container)
     {
         define('WOODY_LIB_POLYLANG_VERSION', '2.2.0');
         define('WOODY_LIB_POLYLANG_ROOT', __FILE__);
@@ -29,7 +29,7 @@ final class Polylang extends Module
         // Define SeasonsFlags
         $this->seasonsFlags = $this->getSeasonsFlags();
 
-        parent::initialize($parameters, $container);
+        parent::initialize($parameterManager, $container);
     }
 
     public static function dependencyServiceDefinitions()

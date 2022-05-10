@@ -206,9 +206,9 @@ class TranslateCommands
             'order' => 'ASC'
         ];
 
-        $query_result = new \WP_Query($args);
-        if (!empty($query_result->posts)) {
-            foreach ($query_result->posts as $children_post) {
+        $wpQuery = new \WP_Query($args);
+        if (!empty($wpQuery->posts)) {
+            foreach ($wpQuery->posts as $children_post) {
                 $this->translatePostAndChildren($children_post, $translate_from, $lang, $auto_translate);
             }
         }
@@ -377,10 +377,10 @@ class TranslateCommands
         $post_metas = get_post_meta($post_id);
         $lang = pll_get_post_language($post_id);
         if (!empty($post_metas) && !empty($lang)) {
-            $pll_acf = new \PLL_ACF_Auto_Translate();
+            $pllacfAutoTranslate = new \PLL_ACF_Auto_Translate();
             foreach ($post_metas as $key => $value) {
                 if (substr($key, 0, 1) != '_') {
-                    $new_value = $pll_acf->translate_meta($value, $key, $lang, $post_id_from, $post_id);
+                    $new_value = $pllacfAutoTranslate->translate_meta($value, $key, $lang, $post_id_from, $post_id);
 
                     // Si différent on met à jour
                     $value = (is_array($value)) ? current($value) : $value;

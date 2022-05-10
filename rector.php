@@ -7,6 +7,7 @@ use Rector\Set\ValueObject\SetList;
 use Rector\Set\ValueObject\LevelSetList;
 
 // Skip Rules
+use Rector\Naming\Rector\Foreach_\RenameForeachValueVariableToMatchExprVariableRector;
 use Rector\CodeQuality\Rector\Array_\ArrayThisCallToThisMethodCallRector;
 use Rector\CodeQuality\Rector\Array_\CallableThisArrayToAnonymousFunctionRector;
 use Rector\CodingStyle\Rector\ClassConst\RemoveFinalFromConstRector;
@@ -22,6 +23,7 @@ return static function (RectorConfig $rectorConfig): void {
         __DIR__ . '/node_modules',
         __DIR__ . '/dist',
         CallableThisArrayToAnonymousFunctionRector::class,
+        RenameForeachValueVariableToMatchExprVariableRector::class, // Foreach single var
         ArrayThisCallToThisMethodCallRector::class, // Transform add_action + add_filter
         RemoveUnusedPromotedPropertyRector::class, // Rule PHP8.0
         RemoveFinalFromConstRector::class, // Rule PHP8.1
@@ -33,6 +35,7 @@ return static function (RectorConfig $rectorConfig): void {
         SetList::CODE_QUALITY,
         SetList::DEAD_CODE,
         SetList::CODING_STYLE,
+        SetList::NAMING,
 
         // PHP 8 Migration
         // LevelSetList::UP_TO_PHP_81,
