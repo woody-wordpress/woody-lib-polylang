@@ -319,6 +319,7 @@ class TranslateCommands
             // Get target
             if (empty($assoc_args['lang'])) {
                 output_error('Argument manquant ou invalide "--lang=en"');
+                exit();
             } else {
                 $lang = $this->existingLanguages($assoc_args['lang']);
             }

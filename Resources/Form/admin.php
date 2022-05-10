@@ -154,7 +154,7 @@ switch ($active_tab) {
         if ($form->isSuccess()) {
             $options = [];
             foreach ($form->getValues() as $lang_usage => $lang_usage_value) {
-                list($lang, $usage) = explode('_', $lang_usage);
+                [$lang, $usage] = explode('_', $lang_usage);
                 if ($lang_usage_value) {
                     $options[$lang][] = $usage;
                 } elseif (!isset($options[$lang])) {
