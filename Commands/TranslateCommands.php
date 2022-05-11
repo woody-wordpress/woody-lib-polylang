@@ -109,9 +109,9 @@ class TranslateCommands
             // Count Total posts
             $args = [
                 'post_status' => 'any',
-                'posts_per_page' => 1,
                 'post_type' => $post_types,
                 'lang' => $translate_from,
+                'posts_per_page' => 1,
             ];
 
             $query_result = new \WP_Query($args);
@@ -123,9 +123,9 @@ class TranslateCommands
             $args = [
                 'post_status' => 'any',
                 'post_parent' => 0,
-                'posts_per_page' => -1,
                 'post_type' => $post_types,
                 'lang' => $translate_from,
+                'posts_per_page' => -1,
                 'orderby' => 'menu_order',
                 'order' => 'ASC'
             ];
@@ -208,9 +208,8 @@ class TranslateCommands
         $args = [
             'post_status' => 'any',
             'post_parent' => $post->ID,
+            'post_type' => $post->post_type,
             'posts_per_page' => -1,
-            'post_type' => 'page',
-            'lang' => $translate_from,
             'orderby' => 'menu_order',
             'order' => 'ASC'
         ];
@@ -319,7 +318,7 @@ class TranslateCommands
     public function fields($args, $assoc_args)
     {
         // Get target
-        $source = empty($assoc_args['source']) ? 'fr' : $this->existingLanguages($assoc_args['source']);
+        $source = empty($assoc_args['source']) ? 'fr' : current($this->existingLanguages($assoc_args['source']));
 
         // Get target
         if (!empty($assoc_args['post']) && is_numeric($assoc_args['post'])) {
@@ -351,9 +350,9 @@ class TranslateCommands
             // Count Total posts
             $args = [
                 'post_status' => 'any',
-                'posts_per_page' => 1,
                 'post_type' => $post_types,
                 'lang' => $lang,
+                'posts_per_page' => 1,
             ];
 
             $query_result = new \WP_Query($args);
@@ -364,9 +363,9 @@ class TranslateCommands
             $args = [
                 'post_status' => 'any',
                 'post_parent' => 0,
-                'posts_per_page' => -1,
                 'lang' => $lang,
                 'post_type' => $post_types,
+                'posts_per_page' => -1,
                 'orderby' => 'menu_order',
                 'order' => 'ASC'
             ];
@@ -374,7 +373,7 @@ class TranslateCommands
             $query_result = new \WP_Query($args);
             if (!empty($query_result->posts)) {
                 foreach ($query_result->posts as $post) {
-                    $this->translateFields($post->ID, $source);
+                    $this->translateFieldsAndChildren($post, $source);
                 }
 
                 output_success('Posts corrigés avec succès');
@@ -384,29 +383,61 @@ class TranslateCommands
         }
     }
 
-    private function translateFields($post_id, $source)
+    private function translateFieldsAndChildren($post, $source)
+    {
+        $this->translateFields($post, $source);
+
+        $args = [
+            'post_status' => 'any',
+            'post_parent' => $post->ID,
+            'post_type' => $post->post_type,
+            'posts_per_page' => -1,
+            'orderby' => 'menu_order',
+            'order' => 'ASC'
+        ];
+
+        $wpQuery = new \WP_Query($args);
+        if (!empty($wpQuery->posts)) {
+            foreach ($wpQuery->posts as $children_post) {
+                $this->translateFieldsAndChildren($children_post, $source);
+            }
+        }
+    }
+
+    private function translateFields($post, $source)
     {
         ++$this->count;
-        output_h3(sprintf('%s/%s - Correction du post N°%s', $this->count, $this->total, $post_id));
+        output_h3(sprintf('%s/%s - Correction du post N°%s', $this->count, $this->total, $post->ID));
 
-        $post_id_from = pll_get_post($post_id, $source);
-        $post_metas = get_post_meta($post_id);
-        $lang = pll_get_post_language($post_id);
+        $tr_post_id = pll_get_post($post->ID, $source);
+        $post_metas = get_post_meta($post->ID);
+        $lang = pll_get_post_language($post->ID);
+
+        $total_post_metas = count($post_metas);
+        $fixed_post_metas = 0;
+
         if (!empty($post_metas) && !empty($lang)) {
             $pllacfAutoTranslate = new \PLL_ACF_Auto_Translate();
             foreach ($post_metas as $key => $value) {
                 if (substr($key, 0, 1) != '_') {
-                    $new_value = $pllacfAutoTranslate->translate_meta($value, $key, $lang, $post_id_from, $post_id);
+                    $new_value = $pllacfAutoTranslate->translate_meta($value, $key, $lang, $tr_post_id, $post->ID);
 
                     // Si différent on met à jour
                     $value = (is_array($value)) ? current($value) : $value;
                     $new_value = (is_array($new_value)) ? current($new_value) : $new_value;
                     if (!empty($value) && (!empty($new_value) && $value != $new_value)) {
-                        update_post_meta($post_id, $key, maybe_unserialize($new_value));
+                        update_post_meta($post->ID, $key, maybe_unserialize($new_value));
                         output_success(sprintf('%s (%s > %s)', $key, $value, $new_value));
+                        ++$fixed_post_metas;
                     }
                 }
             }
+        }
+
+        if (empty($fixed_post_metas)) {
+            output_log('Aucune méta à corriger');
+        } else {
+            output_success(sprintf('%s/%s métas corrigées', $fixed_post_metas, $total_post_metas));
         }
     }
 }
