@@ -11,7 +11,7 @@ namespace Woody\Lib\Polylang\Commands;
 // WP_SITE_KEY=superot wp woody:translate post --post=1234 --target=en,de --deepl=true
 // WP_SITE_KEY=superot wp woody:translate posts --source=fr --target=en,de --addon=roadbook --deepl=true
 // WP_SITE_KEY=superot wp woody:translate terms --source=fr --target=en,de --tax=themes,places --deepl=true
-// WP_SITE_KEY=superot wp woody:translate fields
+// WP_SITE_KEY=superot wp woody:translate fields --lang=en --source=fr
 
 class TranslateCommands
 {
@@ -46,6 +46,8 @@ class TranslateCommands
         // Get auto_translate deepL
         if (!empty($assoc_args['deepl']) && filter_var($assoc_args['deepl'], FILTER_VALIDATE_BOOLEAN) == true) {
             $auto_translate = true;
+        } elseif (!empty($assoc_args['deepl']) && $assoc_args['deepl'] == 'force') {
+            $auto_translate = 'force';
         } else {
             $auto_translate = false;
         }
@@ -96,6 +98,8 @@ class TranslateCommands
         // Get auto_translate deepL
         if (!empty($assoc_args['deepl']) && filter_var($assoc_args['deepl'], FILTER_VALIDATE_BOOLEAN) == true) {
             $auto_translate = true;
+        } elseif (!empty($assoc_args['deepl']) && $assoc_args['deepl'] == 'force') {
+            $auto_translate = 'force';
         } else {
             $auto_translate = false;
         }
@@ -165,16 +169,21 @@ class TranslateCommands
         }
 
         // Check if translated post already exists
-        $result = pll_get_post($post->ID, $lang);
+        $tr_post_id = pll_get_post($post->ID, $lang);
 
-        if (!empty($result)) {
-            output_warning(sprintf('Post N°%s déjà traduit vers %s (traduction N°%s)', $post->ID, strtoupper($lang), $result));
+        if (!empty($tr_post_id)) {
+            // Si on est en mode "auto_translate" == force, on cherche un traducteur automatique (dans un autre addon par exemple)
+            if ($auto_translate == 'force') {
+                do_action('woody_auto_translate_post', $tr_post_id);
+            }
+
+            output_warning(sprintf('Post N°%s déjà traduit vers %s (traduction N°%s)', $post->ID, strtoupper($lang), $tr_post_id));
         } else {
-            $new_post_id = PLL()->sync_post->copy_post($post->ID, $lang, false);
+            $tr_post_id = PLL()->sync_post->copy_post($post->ID, $lang, false);
 
             // Si on est en mode "auto_translate", on cherche un traducteur automatique (dans un autre addon par exemple)
-            if ($auto_translate) {
-                do_action('woody_auto_translate_term', $new_post_id);
+            if ($auto_translate == true) {
+                do_action('woody_auto_translate_post', $tr_post_id);
             } else {
                 // Permet de créer une page avec suffixe de langue dans le titre et le permalien lors de la traduction de pages en masse
                 // Don't use wp_update_post to avoid conflict (reverse sync).
@@ -182,12 +191,12 @@ class TranslateCommands
 
                 $post_title = get_the_title($post->ID);
                 $post_title .= ' - ' . strtoupper($lang);
-                $wpdb->update($wpdb->posts, ['post_title' => $post_title, 'post_name' => sanitize_title($post_title)], ['ID' => $new_post_id]);
+                $wpdb->update($wpdb->posts, ['post_title' => $post_title, 'post_name' => sanitize_title($post_title)], ['ID' => $tr_post_id]);
                 output_success(sprintf('Titre du post changé en "%s"', $post_title));
-                clean_post_cache($new_post_id);
+                clean_post_cache($tr_post_id);
 
-                $new_post = get_post($new_post_id);
-                do_action('save_post', $new_post_id, $new_post, true);
+                $tr_post = get_post($tr_post_id);
+                do_action('save_post', $tr_post_id, $tr_post, true);
             }
         }
     }
@@ -239,6 +248,8 @@ class TranslateCommands
         // Get auto_translate deepL
         if (!empty($assoc_args['deepl']) && filter_var($assoc_args['deepl'], FILTER_VALIDATE_BOOLEAN) == true) {
             $auto_translate = true;
+        } elseif (!empty($assoc_args['deepl']) && $assoc_args['deepl'] == 'force') {
+            $auto_translate = 'force';
         } else {
             $auto_translate = false;
         }
@@ -281,11 +292,16 @@ class TranslateCommands
                 $tr_term_id = pll_get_term($term->term_id, $translate_to);
 
                 if (!empty($tr_term_id)) {
+                    // Si on est en mode "auto_translate" == force, on cherche un traducteur automatique (dans un autre addon par exemple)
+                    if ($auto_translate == 'force') {
+                        do_action('woody_auto_translate_term', $tr_term_id, $taxonomy);
+                    }
+
                     output_warning(sprintf('Tag N°%s déjà traduit vers "%s" (traduction N°%s)', $term->term_id, strtoupper($translate_to), $tr_term_id));
                 } else {
                     $tr_term_id = PLL()->sync_content->duplicate_term(null, $term, $translate_to);
 
-                    if ($auto_translate) {
+                    if ($auto_translate == true) {
                         do_action('woody_auto_translate_term', $tr_term_id, $taxonomy);
                     }
 
@@ -324,10 +340,10 @@ class TranslateCommands
             }
 
             // Get target
-            if (empty($assoc_args['types'])) {
-                $post_types = (strpos($assoc_args['types'], ',') !== false) ? explode(',', $assoc_args['types']) : $assoc_args['types'];
-            } elseif (!empty($assoc_args['types']) && $assoc_args['types'] == 'roadbook') {
+            if (!empty($assoc_args['types']) && $assoc_args['types'] == 'roadbook') {
                 $post_types = ['woody_rdbk_leaflets', 'woody_rdbk_feeds'];
+            } elseif (!empty($assoc_args['types'])) {
+                $post_types = (strpos($assoc_args['types'], ',') !== false) ? explode(',', $assoc_args['types']) : $assoc_args['types'];
             } else {
                 $post_types = ['page', 'profile'];
             }
