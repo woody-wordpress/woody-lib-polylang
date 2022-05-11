@@ -173,7 +173,7 @@ class TranslateCommands
 
         if (!empty($tr_post_id)) {
             // Si on est en mode "auto_translate" == force, on cherche un traducteur automatique (dans un autre addon par exemple)
-            if ($auto_translate == 'force') {
+            if ($auto_translate === 'force') {
                 do_action('woody_auto_translate_post', $tr_post_id);
             }
 
@@ -182,7 +182,7 @@ class TranslateCommands
             $tr_post_id = PLL()->sync_post->copy_post($post->ID, $lang, false);
 
             // Si on est en mode "auto_translate", on cherche un traducteur automatique (dans un autre addon par exemple)
-            if ($auto_translate == true) {
+            if ($auto_translate === true) {
                 do_action('woody_auto_translate_post', $tr_post_id);
             } else {
                 // Permet de créer une page avec suffixe de langue dans le titre et le permalien lors de la traduction de pages en masse
@@ -256,14 +256,14 @@ class TranslateCommands
 
         if (!empty($translate_from) && !empty($translate_to)) {
             foreach ($translate_to as $lang) {
-                output_h2(sprintf('Traduction %s > %s', $translate_from, $lang));
+                output_h1(sprintf('Traduction %s > %s', $translate_from, $lang));
                 // Do not translate language into the same language
                 if ($lang != $translate_from) {
                     foreach ($taxonomies as $taxonomy) {
                         if (!get_taxonomy($taxonomy)) {
                             output_error(sprintf("La taxonomie '%s' n'existe pas", $taxonomy));
                         } else {
-                            output_h3(sprintf('Traduction des termes de la taxonomie %s', $taxonomy));
+                            output_h2(sprintf('Traduction des termes de la taxonomie %s', $taxonomy));
                             $this->translateTerms($taxonomy, $translate_from, $lang, $auto_translate);
                         }
                     }
@@ -288,12 +288,12 @@ class TranslateCommands
         if (!empty($terms)) {
             foreach ($terms as $term) {
                 ++$this->count;
-                output_log(sprintf('Traduction du tag "%s" (%s)', $term->name, $term->term_id));
+                output_h3(sprintf('Traduction du tag "%s" (%s)', $term->name, $term->term_id));
                 $tr_term_id = pll_get_term($term->term_id, $translate_to);
 
                 if (!empty($tr_term_id)) {
                     // Si on est en mode "auto_translate" == force, on cherche un traducteur automatique (dans un autre addon par exemple)
-                    if ($auto_translate == 'force') {
+                    if ($auto_translate === 'force') {
                         do_action('woody_auto_translate_term', $tr_term_id, $taxonomy);
                     }
 
@@ -301,7 +301,7 @@ class TranslateCommands
                 } else {
                     $tr_term_id = PLL()->sync_content->duplicate_term(null, $term, $translate_to);
 
-                    if ($auto_translate == true) {
+                    if ($auto_translate === true) {
                         do_action('woody_auto_translate_term', $tr_term_id, $taxonomy);
                     }
 
