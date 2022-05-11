@@ -318,7 +318,7 @@ class TranslateCommands
     public function fields($args, $assoc_args)
     {
         // Get target
-        $source = empty($assoc_args['source']) ? 'fr' : $this->existingLanguages($assoc_args['source']);
+        $source = empty($assoc_args['source']) ? 'fr' : current($this->existingLanguages($assoc_args['source']));
 
         // Get target
         if (!empty($assoc_args['post']) && is_numeric($assoc_args['post'])) {
