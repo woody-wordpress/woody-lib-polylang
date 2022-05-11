@@ -25,11 +25,22 @@ class TranslateCommands
         $this->count = 0;
     }
 
+    private function existingLanguages($langs)
+    {
+        $langs = explode(',', $langs) ;
+        $languages = pll_languages_list(['hide_empty' => 0]);
+        return empty(array_intersect($languages, $langs)) ? [] : array_intersect($languages, $langs);
+    }
+
+    /**
+     * POST
+     */
     public function post($args, $assoc_args)
     {
         // Get post_id
         if (empty($assoc_args['post'])) {
             output_error('Argument manquant ou invalide "--post=1234"');
+            exit();
         } elseif (is_numeric($assoc_args['post'])) {
             $post_id = $assoc_args['post'];
             $post = get_post($post_id);
@@ -39,6 +50,7 @@ class TranslateCommands
         // Get target
         if (empty($assoc_args['target'])) {
             output_error('Argument manquant ou invalide "--target=en,de"');
+            exit();
         } else {
             $translate_to = $this->existingLanguages($assoc_args['target']);
         }
@@ -65,21 +77,26 @@ class TranslateCommands
         }
     }
 
+    /**
+     * POSTS
+     */
     public function posts($args, $assoc_args)
     {
         // Get source
         if (empty($assoc_args['source'])) {
-            $translate_from = current($this->existingLanguages('fr'));
-            if (empty($translate_from)) {
-                output_error('Argument manquant ou invalide "--source=fr"');
-            }
+            $translate_from = PLL_DEFAULT_LANG;
         } else {
             $translate_from = current($this->existingLanguages($assoc_args['source']));
+            if (empty($translate_from)) {
+                output_error('Argument manquant ou invalide "--source=fr"');
+                exit();
+            }
         }
 
         // Get target
         if (empty($assoc_args['target'])) {
             output_error('Argument manquant ou invalide "--target=en,de"');
+            exit();
         } else {
             $translate_to = $this->existingLanguages($assoc_args['target']);
         }
@@ -148,16 +165,6 @@ class TranslateCommands
         }
     }
 
-    private function existingLanguages($langs)
-    {
-        $langs = explode(',', $langs) ;
-        $languages = pll_languages_list(['hide_empty' => 0]);
-        return empty(array_intersect($languages, $langs)) ? [] : array_intersect($languages, $langs);
-    }
-
-    /**
-     * Recursive function that translate firstly the parent post, and then try to translate children if they exists
-     */
     private function translatePost($post, $translate_from, $lang, $auto_translate = false)
     {
         ++$this->count;
@@ -222,21 +229,26 @@ class TranslateCommands
         }
     }
 
+    /**
+     * TERMS
+     */
     public function terms($args, $assoc_args)
     {
         // Get source
         if (empty($assoc_args['source'])) {
-            $translate_from = current($this->existingLanguages('fr'));
-            if (empty($translate_from)) {
-                output_error('Argument manquant ou invalide "--source=fr"');
-            }
+            $translate_from = PLL_DEFAULT_LANG;
         } else {
             $translate_from = current($this->existingLanguages($assoc_args['source']));
+            if (empty($translate_from)) {
+                output_error('Argument manquant ou invalide "--source=fr"');
+                exit();
+            }
         }
 
         // Get target
         if (empty($assoc_args['target'])) {
             output_error('Argument manquant ou invalide "--target=en,de"');
+            exit();
         } else {
             $translate_to = $this->existingLanguages($assoc_args['target']);
         }
@@ -315,6 +327,9 @@ class TranslateCommands
         }
     }
 
+    /**
+     * FIELDS
+     */
     public function fields($args, $assoc_args)
     {
         // Get target
@@ -438,6 +453,38 @@ class TranslateCommands
             output_log('Aucune méta à corriger');
         } else {
             output_success(sprintf('%s/%s métas corrigées', $fixed_post_metas, $total_post_metas));
+        }
+    }
+
+    /**
+     * MEDIAS
+     */
+    public function medias($args, $assoc_args)
+    {
+        // Count Total posts
+        $args = [
+            'post_status' => 'any',
+            'post_type' => 'attachment',
+            'lang' => PLL_DEFAULT_LANG,
+            'posts_per_page' => -1,
+        ];
+
+        $query_result = new \WP_Query($args);
+        $this->count = 0;
+        $this->total = $query_result->found_posts;
+        output_h1(sprintf('%s médias trouvés à traduire', $this->total));
+        if (!empty($query_result->posts)) {
+            foreach ($query_result->posts as $post) {
+                ++$this->count;
+                output_h3(sprintf('%s/%s - Traduction du média N°%s', $this->count, $this->total, $post->ID));
+                if (wp_attachment_is_image($post->ID)) {
+                    do_action('save_attachment', $post->ID);
+                } else {
+                    output_log("Ce média n'est pas une image");
+                }
+            }
+        } else {
+            output_error(sprintf('0 post à traduire. Etes-vous certain que la langue (%s) existe, et que des médias existent dans cette langue.', $translate_from));
         }
     }
 }

@@ -21,7 +21,7 @@ final class Polylang extends Module
 
     public function initialize(ParameterManager $parameterManager, Container $container)
     {
-        define('WOODY_LIB_POLYLANG_VERSION', '2.4.2');
+        define('WOODY_LIB_POLYLANG_VERSION', '2.5.0');
         define('WOODY_LIB_POLYLANG_ROOT', __FILE__);
         define('WOODY_LIB_POLYLANG_DIR_ROOT', dirname(WOODY_LIB_POLYLANG_ROOT));
         define('WOODY_LIB_POLYLANG_URL', basename(__DIR__) . '/Resources/Assets');
@@ -110,7 +110,7 @@ final class Polylang extends Module
 
     public function registerCommands()
     {
-        \WP_CLI::add_command('woody:translate', new TranslateCommands($this->container));
+        \WP_CLI::add_command('woody:translate', new TranslateCommands());
     }
 
     public function metaLangUsagesRedirect()
@@ -535,6 +535,13 @@ final class Polylang extends Module
          * @param string $slug    language code of the new translation
          */
         do_action('pll_translate_media', $post_id, $tr_id, $lang);
+
+        /**
+         * Ajout de Raccourci Agency pour traduire automatiquement avec DeepL
+         */
+        do_action('woody_auto_translate_media', $tr_id);
+        output_success(sprintf('Média traduit en %s (%s > %s)', strtoupper($lang), $post_id, $tr_id));
+
         return $tr_id;
     }
 
