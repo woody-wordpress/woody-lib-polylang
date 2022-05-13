@@ -21,7 +21,7 @@ final class Polylang extends Module
 
     public function initialize(ParameterManager $parameterManager, Container $container)
     {
-        define('WOODY_LIB_POLYLANG_VERSION', '2.5.0');
+        define('WOODY_LIB_POLYLANG_VERSION', '2.5.1');
         define('WOODY_LIB_POLYLANG_ROOT', __FILE__);
         define('WOODY_LIB_POLYLANG_DIR_ROOT', dirname(WOODY_LIB_POLYLANG_ROOT));
         define('WOODY_LIB_POLYLANG_URL', basename(__DIR__) . '/Resources/Assets');
@@ -581,7 +581,7 @@ final class Polylang extends Module
 
         // Dans le cas des saisons, on remplace le tableau hreflangs envoyé par polylang
         // pour ne renvoyer que les hreflangs de la même saison
-        $currentSeasonLangs = $this->woodyPllLanguagesList(pll_current_language());
+        $currentSeasonLangs = $this->woodyPllLanguagesList('auto');
         if (!empty($currentSeasonLangs)) {
             $hreflangs = [];
             foreach ($currentSeasonLangs as $langObject) {
