@@ -338,8 +338,8 @@ class TranslateCommands
 
         // Get target
         if (!empty($assoc_args['post']) && is_numeric($assoc_args['post'])) {
-            $post_id = $assoc_args['post'];
-            $this->translateFields($post_id, $source);
+            $post = get_post($assoc_args['post']);
+            $this->translateFields($post, $source);
         } else {
             // Get target
             if (empty($assoc_args['lang'])) {
@@ -433,10 +433,9 @@ class TranslateCommands
         $fixed_post_metas = 0;
 
         if (!empty($post_metas) && !empty($lang)) {
-            $pllacfAutoTranslate = new \PLL_ACF_Auto_Translate();
             foreach ($post_metas as $key => $value) {
                 if (substr($key, 0, 1) != '_') {
-                    $new_value = $pllacfAutoTranslate->translate_meta($value, $key, $lang, $tr_post_id, $post->ID);
+                    $new_value = $this->translate_meta($value, $key, $lang, $tr_post_id, $post->ID);
 
                     // Si différent on met à jour
                     $value = (is_array($value)) ? current($value) : $value;
@@ -454,6 +453,22 @@ class TranslateCommands
             output_log('Aucune méta à corriger');
         } else {
             output_success(sprintf('%s/%s métas corrigées', $fixed_post_metas, $total_post_metas));
+        }
+    }
+
+    private function translate_meta($value, $key, $lang, $tr_post_id, $post_id)
+    {
+        if (substr($key, -4) == 'link') {
+            $value = (is_array($value)) ? maybe_unserialize(current($value)) : $value;
+            if (is_array($value) && !empty($value['url'])) {
+                $url_to_postid = url_to_postid($value['url']);
+                $pll_post_id = (!empty($url_to_postid)) ? pll_get_post($url_to_postid, $lang) : null;
+                $value['url'] = (!empty($pll_post_id)) ? get_permalink($pll_post_id) : $value['url'];
+                return maybe_serialize($value);
+            }
+        } else {
+            $pllacfAutoTranslate = new \PLL_ACF_Auto_Translate();
+            return $pllacfAutoTranslate->translate_meta($value, $key, $lang, $tr_post_id, $post_id);
         }
     }
 
