@@ -20,10 +20,13 @@ class TranslateCommands
 
     private $count;
 
+    private $pllacfAutoTranslate;
+
     public function __construct()
     {
         $this->total = 0;
         $this->count = 0;
+        $this->pllacfAutoTranslate = new \PLL_ACF_Auto_Translate();
     }
 
     private function existingLanguages($langs)
@@ -429,7 +432,7 @@ class TranslateCommands
         $post_metas = get_post_meta($post->ID);
         $lang = pll_get_post_language($post->ID);
 
-        $total_post_metas = count($post_metas);
+        $total_post_metas = is_countable($post_metas) ? count($post_metas) : 0;
         $fixed_post_metas = 0;
 
         if (!empty($post_metas) && !empty($lang)) {
@@ -462,13 +465,12 @@ class TranslateCommands
             $value = (is_array($value)) ? maybe_unserialize(current($value)) : $value;
             if (is_array($value) && !empty($value['url'])) {
                 $url_to_postid = url_to_postid($value['url']);
-                $pll_post_id = (!empty($url_to_postid)) ? pll_get_post($url_to_postid, $lang) : null;
-                $value['url'] = (!empty($pll_post_id)) ? get_permalink($pll_post_id) : $value['url'];
+                $pll_post_id = (empty($url_to_postid)) ? null : pll_get_post($url_to_postid, $lang);
+                $value['url'] = (empty($pll_post_id)) ? $value['url'] : get_permalink($pll_post_id);
                 return maybe_serialize($value);
             }
         } else {
-            $pllacfAutoTranslate = new \PLL_ACF_Auto_Translate();
-            return $pllacfAutoTranslate->translate_meta($value, $key, $lang, $tr_post_id, $post_id);
+            return $this->pllacfAutoTranslate->translate_meta($value, $key, $lang, $tr_post_id, $post_id);
         }
     }
 
@@ -485,12 +487,12 @@ class TranslateCommands
             'posts_per_page' => -1,
         ];
 
-        $query_result = new \WP_Query($args);
+        $wpQuery = new \WP_Query($args);
         $this->count = 0;
-        $this->total = $query_result->found_posts;
+        $this->total = $wpQuery->found_posts;
         output_h1(sprintf('%s médias trouvés à traduire', $this->total));
-        if (!empty($query_result->posts)) {
-            foreach ($query_result->posts as $post) {
+        if (!empty($wpQuery->posts)) {
+            foreach ($wpQuery->posts as $post) {
                 ++$this->count;
                 output_h3(sprintf('%s/%s - Traduction du média N°%s', $this->count, $this->total, $post->ID));
                 if (wp_attachment_is_image($post->ID)) {
@@ -500,7 +502,7 @@ class TranslateCommands
                 }
             }
         } else {
-            output_error(sprintf('0 post à traduire. Etes-vous certain que la langue (%s) existe, et que des médias existent dans cette langue.', $translate_from));
+            output_error(sprintf('0 post à traduire. Etes-vous certain que la langue (%s) existe, et que des médias existent dans cette langue.', PLL_DEFAULT_LANG));
         }
     }
 }
