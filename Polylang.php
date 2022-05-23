@@ -21,15 +21,26 @@ final class Polylang extends Module
 
     public function initialize(ParameterManager $parameterManager, Container $container)
     {
-        define('WOODY_LIB_POLYLANG_VERSION', '2.5.3');
+        define('WOODY_LIB_POLYLANG_VERSION', '2.6.0');
         define('WOODY_LIB_POLYLANG_ROOT', __FILE__);
         define('WOODY_LIB_POLYLANG_DIR_ROOT', dirname(WOODY_LIB_POLYLANG_ROOT));
         define('WOODY_LIB_POLYLANG_URL', basename(__DIR__) . '/Resources/Assets');
+
+        // Constantes
+        define('WOODY_LANG_ENABLE', get_option('woody_lang_enable', []));
+        define('WOODY_LANG_SEASONS', get_option('woody_lang_seasons', []));
+
+        if (!empty(WOODY_LANG_SEASONS) && (in_array('hiver', WOODY_LANG_SEASONS) || in_array('ete', WOODY_LANG_SEASONS))) {
+            define('WOODY_HAS_SEASONS', true);
+        } else {
+            define('WOODY_HAS_SEASONS', false);
+        }
 
         // Define SeasonsFlags
         $this->seasonsFlags = $this->getSeasonsFlags();
 
         parent::initialize($parameterManager, $container);
+        require_once WOODY_LIB_POLYLANG_DIR_ROOT . '/Helpers/Helpers.php';
     }
 
     public static function dependencyServiceDefinitions()
@@ -50,47 +61,6 @@ final class Polylang extends Module
         add_action('admin_enqueue_scripts', [$this, 'enqueueAdminAssets']);
         add_action('wp_loaded', [$this, 'wpLoaded'], 30);
 
-        // Fonction de duplication des médias
-        add_filter('woody_pll_create_media_translation', [$this, 'woodyPllCreateMediaTranslation'], 10, 2);
-
-        // Retourne toutes les langues
-        // Si current_lang donné en paramètre, ne retourne que les langues de la même saison
-        add_filter('woody_pll_languages_list', [$this, 'woodyPllLanguagesList'], 10, 1);
-
-        // Retourne le codes langue courant mais en se basant sur les locales
-        add_filter('woody_pll_current_language', [$this, 'woodyPllCurrentLanguage'], 10);
-
-        // Retourne la saison de la langue courante
-        add_filter('woody_pll_current_season', [$this, 'woodyPllCurrentSeason'], 10);
-
-        // Retourne la langue du post mais en se basant sur les locales
-        add_filter('woody_pll_get_post_language', [$this, 'woodyPllGetPostLanguage'], 10, 1);
-
-        // Retourne la langue du post mais en se basant sur les locales
-        add_filter('woody_pll_get_post_season', [$this, 'woodyPllGetPostSeason'], 10, 1);
-
-        // Retourne le code lang (issue de la locale) à partir du slug
-        add_filter('woody_pll_get_lang_by_slug', [$this, 'woodyPllGetLangBySlug'], 10);
-
-        // Retourne le switcher de langue
-        // Si current_lang donné en paramètre, ne retourne que les langues de la même saison
-        add_filter('woody_pll_the_languages', [$this, 'woodyPllTheLanguages'], 10, 1);
-
-        // Retourne les codes langues sur 2 caractères mais en se basant sur les locales
-        add_filter('woody_pll_the_locales', [$this, 'woodyPllTheLocales'], 10, 1);
-
-        // Liste les saisons d'une même langue
-        add_filter('woody_pll_the_seasons', [$this, 'woodyPllTheSeasons'], 10);
-
-        // Retourne la langue par défaut mais en se basant sur la locale
-        add_filter('woody_pll_default_lang', [$this, 'woodyPllDefaultLang'], 10, 1);
-
-        // Retourne le slug du langage par défaut
-        add_filter('woody_pll_default_lang_code', [$this, 'woodyPllDefaultlangCode'], 10, 1);
-
-        // Retourne le titre d'un post dans la langue par défaut
-        add_filter('woody_default_lang_post_title', [$this, 'woodyDefaultLangPostTitle'], 10, 1);
-
         // Surcharge de fonction Polylang par défaut (ajout de drapeau par exemple)
         add_filter('wpssoc_user_redirect_url', [$this, 'wpssocUserRedirectUrl'], 10, 1);
         add_filter('pll_is_cache_active', [$this, 'isCacheActive']);
@@ -106,6 +76,21 @@ final class Polylang extends Module
 
         // Override pll sync
         add_filter('pll_sync_post_fields', [$this, 'unsetSyncPostURL'], 10, 4);
+
+        // Ne pas utiliser ces filtres directement, utiliser les Helpers
+        add_filter('woody_pll_create_media_translation', [$this, 'woodyPllCreateMediaTranslation'], 10, 2);
+        add_filter('woody_pll_languages_list', [$this, 'woodyPllLanguagesList'], 10, 1);
+        add_filter('woody_pll_current_language', [$this, 'woodyPllCurrentLanguage'], 10);
+        add_filter('woody_pll_current_season', [$this, 'woodyPllCurrentSeason'], 10);
+        add_filter('woody_pll_get_post_language', [$this, 'woodyPllGetPostLanguage'], 10, 1);
+        add_filter('woody_pll_get_post_season', [$this, 'woodyPllGetPostSeason'], 10, 1);
+        add_filter('woody_pll_get_lang_by_slug', [$this, 'woodyPllGetLangBySlug'], 10, 1);
+        add_filter('woody_pll_the_languages', [$this, 'woodyPllTheLanguages'], 10, 1);
+        add_filter('woody_pll_the_locales', [$this, 'woodyPllTheLocales'], 10);
+        add_filter('woody_pll_the_seasons', [$this, 'woodyPllTheSeasons'], 10);
+        add_filter('woody_pll_default_lang', [$this, 'woodyPllDefaultLang'], 10, 1);
+        add_filter('woody_pll_default_lang_code', [$this, 'woodyPllDefaultlangCode'], 10, 1);
+        add_filter('woody_default_lang_post_title', [$this, 'woodyDefaultLangPostTitle'], 10, 1);
     }
 
     public function registerCommands()
@@ -273,8 +258,7 @@ final class Polylang extends Module
 
         // On garde uniquement les langues de la même saison
         if (!empty($current_season) || $current_season == 'auto') {
-            $woody_lang_seasons = get_option('woody_lang_seasons', []);
-
+            $woody_lang_seasons = (defined('WOODY_LANG_SEASONS') && is_array(WOODY_LANG_SEASONS)) ? WOODY_LANG_SEASONS : [];
             if (!empty($woody_lang_seasons)) {
                 if ($current_season == 'auto') {
                     $current_lang = pll_current_language();
@@ -313,8 +297,7 @@ final class Polylang extends Module
 
         // On garde uniquement les langues de la même saison
         if (!empty($current_season) || $current_season == 'auto') {
-            $woody_lang_seasons = get_option('woody_lang_seasons', []);
-
+            $woody_lang_seasons = (defined('WOODY_LANG_SEASONS') && is_array(WOODY_LANG_SEASONS)) ? WOODY_LANG_SEASONS : [];
             if (!empty($woody_lang_seasons)) {
                 if ($current_season == 'auto') {
                     $current_lang = pll_current_language();
@@ -345,7 +328,7 @@ final class Polylang extends Module
             return;
         }
 
-        $woody_lang_seasons = get_option('woody_lang_seasons', []);
+        $woody_lang_seasons = (defined('WOODY_LANG_SEASONS') && is_array(WOODY_LANG_SEASONS)) ? WOODY_LANG_SEASONS : [];
         if (!empty($woody_lang_seasons)) {
             $languages = pll_the_languages(array(
                 'display_names_as'       => 'name',
@@ -391,7 +374,7 @@ final class Polylang extends Module
     public function woodyPllDefaultLang($season = null)
     {
         if (function_exists('pll_languages_list') && !empty($season)) {
-            $woody_lang_seasons = get_option('woody_lang_seasons', []);
+            $woody_lang_seasons = (defined('WOODY_LANG_SEASONS') && is_array(WOODY_LANG_SEASONS)) ? WOODY_LANG_SEASONS : [];
             $default_season = $woody_lang_seasons[PLL_DEFAULT_LANG];
             if (empty($default_season) || $default_season == $season) {
                 return PLL_DEFAULT_LANG;
@@ -414,7 +397,7 @@ final class Polylang extends Module
         return $this->locale_to_lang($locale);
     }
 
-    public function woodyPllGetLangBySlug($slug = null)
+    public function woodyPllGetLangBySlug($slug)
     {
         if (function_exists('pll_languages_list')) {
             if (empty($slug)) {
@@ -451,7 +434,7 @@ final class Polylang extends Module
 
     public function woodyPllGetPostSeason($post_id = null)
     {
-        $woody_lang_seasons = get_option('woody_lang_seasons', []);
+        $woody_lang_seasons = (defined('WOODY_LANG_SEASONS') && is_array(WOODY_LANG_SEASONS)) ? WOODY_LANG_SEASONS : [];
         if (function_exists('pll_get_post_language') && !empty($post_id) && !empty($woody_lang_seasons)) {
             $slug = pll_get_post_language($post_id);
             if (!empty($woody_lang_seasons[$slug]) && $woody_lang_seasons[$slug] != 'default') {
@@ -472,7 +455,7 @@ final class Polylang extends Module
     {
         if (function_exists('pll_current_language')) {
             $slug = pll_current_language();
-            $woody_lang_seasons = get_option('woody_lang_seasons', []);
+            $woody_lang_seasons = (defined('WOODY_LANG_SEASONS') && is_array(WOODY_LANG_SEASONS)) ? WOODY_LANG_SEASONS : [];
             if (!empty($woody_lang_seasons) && !empty($woody_lang_seasons[$slug]) && $woody_lang_seasons[$slug] != 'default') {
                 return $woody_lang_seasons[$slug];
             }
@@ -491,13 +474,13 @@ final class Polylang extends Module
     public function woodyPllCreateMediaTranslation($post_id, $lang)
     {
         if (empty($post_id)) {
-            return $post_id;
+            return;
         }
 
         $post = get_post($post_id);
 
         if (empty($post)) {
-            return $post;
+            return;
         }
 
         // Create a new attachment ( translate attachment parent if exists )
@@ -577,7 +560,7 @@ final class Polylang extends Module
 
     public function pllRelHreflangAttributes($hreflangs)
     {
-        $woody_lang_enable = get_option('woody_lang_enable', []);
+        $woody_lang_enable = (defined('WOODY_LANG_ENABLE') && is_array(WOODY_LANG_ENABLE)) ? WOODY_LANG_ENABLE : [];
 
         // Dans le cas des saisons, on remplace le tableau hreflangs envoyé par polylang
         // pour ne renvoyer que les hreflangs de la même saison
@@ -612,7 +595,7 @@ final class Polylang extends Module
     {
         if ('0' != $public) {
             $polylang = get_option('polylang');
-            $woody_lang_enable = get_option('woody_lang_enable', []);
+            $woody_lang_enable = (defined('WOODY_LANG_ENABLE') && is_array(WOODY_LANG_ENABLE)) ? WOODY_LANG_ENABLE : [];
 
             if ($polylang['force_lang'] == 3 && !empty($polylang['domains'])) {
                 // Si le site est en multi domaines, on cree un robots par domaine
