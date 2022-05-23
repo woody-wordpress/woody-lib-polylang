@@ -21,7 +21,7 @@ final class Polylang extends Module
 
     public function initialize(ParameterManager $parameterManager, Container $container)
     {
-        define('WOODY_LIB_POLYLANG_VERSION', '2.6.0');
+        define('WOODY_LIB_POLYLANG_VERSION', '2.7.0');
         define('WOODY_LIB_POLYLANG_ROOT', __FILE__);
         define('WOODY_LIB_POLYLANG_DIR_ROOT', dirname(WOODY_LIB_POLYLANG_ROOT));
         define('WOODY_LIB_POLYLANG_URL', basename(__DIR__) . '/Resources/Assets');
@@ -78,7 +78,7 @@ final class Polylang extends Module
         add_filter('pll_sync_post_fields', [$this, 'unsetSyncPostURL'], 10, 4);
 
         // Ne pas utiliser ces filtres directement, utiliser les Helpers
-        add_filter('woody_pll_create_media_translation', [$this, 'woodyPllCreateMediaTranslation'], 10, 2);
+        add_filter('woody_pll_create_media_translation', [$this, 'woodyPllCreateMediaTranslation'], 10, 3);
         add_filter('woody_pll_languages_list', [$this, 'woodyPllLanguagesList'], 10, 1);
         add_filter('woody_pll_current_language', [$this, 'woodyPllCurrentLanguage'], 10);
         add_filter('woody_pll_current_season', [$this, 'woodyPllCurrentSeason'], 10);
@@ -471,7 +471,7 @@ final class Polylang extends Module
     // Copy of native Polylang function
     // PLL()->posts->create_media_translation($attachment_id, $lang);
     // --------------------------------
-    public function woodyPllCreateMediaTranslation($post_id, $lang)
+    public function woodyPllCreateMediaTranslation($post_id, $source_lang, $target_lang)
     {
         if (empty($post_id)) {
             return;
@@ -486,8 +486,8 @@ final class Polylang extends Module
         // Create a new attachment ( translate attachment parent if exists )
         add_filter('pll_enable_duplicate_media', '__return_false', 99); // Avoid a conflict with automatic duplicate at upload
         $post->ID = null; // Will force the creation
-        $post->post_parent = ($post->post_parent && $tr_parent = pll_get_post($post->post_parent, $lang)) ? $tr_parent : 0;
-        $post->tax_input = array('language' => array($lang)); // Assigns the language
+        $post->post_parent = ($post->post_parent && $tr_parent = pll_get_post($post->post_parent, $target_lang)) ? $tr_parent : 0;
+        $post->tax_input = array('language' => array($target_lang)); // Assigns the language
         $tr_id = wp_insert_attachment($post);
         remove_filter('pll_enable_duplicate_media', '__return_false', 99); // Restore automatic duplicate at upload
 
@@ -498,14 +498,14 @@ final class Polylang extends Module
             }
         }
 
-        pll_set_post_language($tr_id, $lang);
+        pll_set_post_language($tr_id, $target_lang);
 
         $translations = pll_get_post_translations($post_id);
         if (!$translations && $src_lang = pll_get_post($post_id)) {
             $translations[$src_lang->slug] = $post_id;
         }
 
-        $translations[$lang] = $tr_id;
+        $translations[$target_lang] = $tr_id;
         pll_save_post_translations($translations);
 
         /**
@@ -517,13 +517,13 @@ final class Polylang extends Module
          * @param int    $tr_id   post id of the new media translation
          * @param string $slug    language code of the new translation
          */
-        do_action('pll_translate_media', $post_id, $tr_id, $lang);
+        do_action('pll_translate_media', $post_id, $tr_id, $target_lang);
 
         /**
          * Ajout de Raccourci Agency pour traduire automatiquement avec DeepL
          */
-        do_action('woody_auto_translate_media', $tr_id);
-        output_success(sprintf('Média traduit en %s (%s > %s)', strtoupper($lang), $post_id, $tr_id));
+        do_action('woody_auto_translate_media', $tr_id, $source_lang);
+        output_success(sprintf('Média traduit en %s (%s > %s)', strtoupper($target_lang), $post_id, $tr_id));
 
         return $tr_id;
     }

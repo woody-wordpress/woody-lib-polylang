@@ -7,9 +7,9 @@
  */
 
 // Fonction de duplication des médias
-function woody_pll_create_media_translation($post_id, $lang)
+function woody_pll_create_media_translation($post_id, $source_lang, $target_lang)
 {
-    return apply_filters('woody_pll_create_media_translation', $post_id, $lang);
+    return apply_filters('woody_pll_create_media_translation', $post_id, $source_lang, $target_lang);
 }
 
 // Retourne pll_languages_list(['fields' => ''])
