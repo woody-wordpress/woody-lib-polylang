@@ -11,6 +11,7 @@ namespace Woody\Lib\Polylang\Commands;
 // WP_SITE_KEY=superot wp woody:translate post --post=1234 --target=en,de --deepl=true
 // WP_SITE_KEY=superot wp woody:translate posts --source=fr --target=en,de --addon=roadbook --deepl=true
 // WP_SITE_KEY=superot wp woody:translate terms --source=fr --target=en,de --tax=themes,places --deepl=true
+// WP_SITE_KEY=superot wp woody:translate fields --post=1234 --source=fr
 // WP_SITE_KEY=superot wp woody:translate fields --lang=en --source=fr
 // WP_SITE_KEY=superot wp woody:translate medias
 
@@ -48,7 +49,7 @@ class TranslateCommands
         } elseif (is_numeric($assoc_args['post'])) {
             $post_id = $assoc_args['post'];
             $post = get_post($post_id);
-            $translate_from = pll_get_post_language($post_id);
+            $source_lang = woody_pll_get_post_language($post_id);
         }
 
         // Get target
@@ -56,7 +57,7 @@ class TranslateCommands
             output_error('Argument manquant ou invalide "--target=en,de"');
             exit();
         } else {
-            $translate_to = $this->existingLanguages($assoc_args['target']);
+            $target_langs = $this->existingLanguages($assoc_args['target']);
         }
 
         // Get auto_translate deepL
@@ -68,11 +69,11 @@ class TranslateCommands
             $auto_translate = false;
         }
 
-        if (!empty($translate_from) && !empty($translate_to) && !empty($post)) {
-            foreach ($translate_to as $lang) {
+        if (!empty($source_lang) && !empty($target_langs) && !empty($post)) {
+            foreach ($target_langs as $target_lang) {
                 // Do not translate language into the same language
-                if ($lang != $translate_from) {
-                    $this->translatePost($post, $translate_from, $lang, $auto_translate);
+                if ($target_lang != $source_lang) {
+                    $this->translatePost($post, $source_lang, $target_lang, $auto_translate);
                     output_success('Post traduit avec succès');
                 } else {
                     output_warning('Ne pas traduire dans la même langue');
@@ -88,10 +89,10 @@ class TranslateCommands
     {
         // Get source
         if (empty($assoc_args['source'])) {
-            $translate_from = PLL_DEFAULT_LANG;
+            $source_lang = woody_woody_pll_default_lang();
         } else {
-            $translate_from = current($this->existingLanguages($assoc_args['source']));
-            if (empty($translate_from)) {
+            $source_lang = current($this->existingLanguages($assoc_args['source']));
+            if (empty($source_lang)) {
                 output_error('Argument manquant ou invalide "--source=fr"');
                 exit();
             }
@@ -102,7 +103,7 @@ class TranslateCommands
             output_error('Argument manquant ou invalide "--target=en,de"');
             exit();
         } else {
-            $translate_to = $this->existingLanguages($assoc_args['target']);
+            $target_langs = $this->existingLanguages($assoc_args['target']);
         }
 
         // Get target
@@ -125,27 +126,27 @@ class TranslateCommands
             $auto_translate = false;
         }
 
-        if (!empty($translate_from) && !empty($translate_to)) {
+        if (!empty($source_lang) && !empty($target_langs)) {
 
             // Count Total posts
             $args = [
                 'post_status' => 'any',
                 'post_type' => $post_types,
-                'lang' => $translate_from,
+                'lang' => $source_lang,
                 'posts_per_page' => 1,
             ];
 
             $query_result = new \WP_Query($args);
             $this->count = 0;
             $this->total = $query_result->found_posts;
-            output_h1(sprintf('%s posts trouvés en %s à traduire vers %s', $this->total, $translate_from, implode(',', $translate_to)));
+            output_h1(sprintf('%s posts trouvés en %s à traduire vers %s', $this->total, $source_lang, implode(',', $target_langs)));
 
             // Search only "post_parent = 0" posts
             $args = [
                 'post_status' => 'any',
                 'post_parent' => 0,
                 'post_type' => $post_types,
-                'lang' => $translate_from,
+                'lang' => $source_lang,
                 'posts_per_page' => -1,
                 'orderby' => 'menu_order',
                 'order' => 'ASC'
@@ -153,55 +154,55 @@ class TranslateCommands
 
             $query_result = new \WP_Query($args);
             if (!empty($query_result->posts)) {
-                foreach ($translate_to as $lang) {
-                    output_h2(sprintf('Traduction %s > %s', $translate_from, $lang));
-                    if ($lang != $translate_from) {
+                foreach ($target_langs as $target_lang) {
+                    output_h2(sprintf('Traduction %s > %s', $source_lang, $target_lang));
+                    if ($target_lang != $source_lang) {
                         foreach ($query_result->posts as $post) {
-                            $this->translatePostAndChildren($post, $translate_from, $lang, $auto_translate);
+                            $this->translatePostAndChildren($post, $source_lang, $target_lang, $auto_translate);
                         }
                     } else {
                         output_error('Ne pas traduire dans la même langue');
                     }
                 }
             } else {
-                output_error(sprintf('0 post à traduire. Etes-vous certain que la langue (%s) existe, et que des pages existent dans cette langue.', $translate_from));
+                output_error(sprintf('0 post à traduire. Etes-vous certain que la langue (%s) existe, et que des pages existent dans cette langue.', $source_lang));
             }
         }
     }
 
-    private function translatePost($post, $translate_from, $lang, $auto_translate = false)
+    private function translatePost($post, $source_lang, $target_lang, $auto_translate = false)
     {
         ++$this->count;
-        output_h3(sprintf('%s/%s - Traduction du post N°%s vers %s', $this->count, $this->total, $post->ID, strtoupper($lang)));
+        output_h3(sprintf('%s/%s - Traduction du post N°%s vers %s', $this->count, $this->total, $post->ID, strtoupper($target_lang)));
 
-        if ($lang == $translate_from) {
+        if ($target_lang == $source_lang) {
             output_error('Ne pas traduire dans la même langue');
             exit();
         }
 
         // Check if translated post already exists
-        $tr_post_id = pll_get_post($post->ID, $lang);
+        $tr_post_id = pll_get_post($post->ID, $target_lang);
 
         if (!empty($tr_post_id)) {
             // Si on est en mode "auto_translate" == force, on cherche un traducteur automatique (dans un autre addon par exemple)
             if ($auto_translate === 'force') {
-                do_action('woody_auto_translate_post', $tr_post_id);
+                do_action('woody_auto_translate_post', $tr_post_id, $source_lang);
             }
 
-            output_warning(sprintf('Post N°%s déjà traduit vers %s (traduction N°%s)', $post->ID, strtoupper($lang), $tr_post_id));
+            output_warning(sprintf('Post N°%s déjà traduit vers %s (traduction N°%s)', $post->ID, strtoupper($target_lang), $tr_post_id));
         } else {
-            $tr_post_id = PLL()->sync_post->copy_post($post->ID, $lang, false);
+            $tr_post_id = PLL()->sync_post->copy_post($post->ID, $target_lang, false);
 
             // Si on est en mode "auto_translate", on cherche un traducteur automatique (dans un autre addon par exemple)
             if ($auto_translate === true) {
-                do_action('woody_auto_translate_post', $tr_post_id);
+                do_action('woody_auto_translate_post', $tr_post_id, $source_lang);
             } else {
                 // Permet de créer une page avec suffixe de langue dans le titre et le permalien lors de la traduction de pages en masse
                 // Don't use wp_update_post to avoid conflict (reverse sync).
                 global $wpdb;
 
                 $post_title = get_the_title($post->ID);
-                $post_title .= ' - ' . strtoupper($lang);
+                $post_title .= ' - ' . strtoupper($target_lang);
                 $wpdb->update($wpdb->posts, ['post_title' => $post_title, 'post_name' => sanitize_title($post_title)], ['ID' => $tr_post_id]);
                 output_success(sprintf('Titre du post changé en "%s"', $post_title));
                 clean_post_cache($tr_post_id);
@@ -212,9 +213,9 @@ class TranslateCommands
         }
     }
 
-    private function translatePostAndChildren($post, $translate_from, $lang, $auto_translate = false)
+    private function translatePostAndChildren($post, $source_lang, $target_lang, $auto_translate = false)
     {
-        $this->translatePost($post, $translate_from, $lang, $auto_translate);
+        $this->translatePost($post, $source_lang, $target_lang, $auto_translate);
 
         $args = [
             'post_status' => 'any',
@@ -228,7 +229,7 @@ class TranslateCommands
         $wpQuery = new \WP_Query($args);
         if (!empty($wpQuery->posts)) {
             foreach ($wpQuery->posts as $children_post) {
-                $this->translatePostAndChildren($children_post, $translate_from, $lang, $auto_translate);
+                $this->translatePostAndChildren($children_post, $source_lang, $target_lang, $auto_translate);
             }
         }
     }
@@ -240,10 +241,10 @@ class TranslateCommands
     {
         // Get source
         if (empty($assoc_args['source'])) {
-            $translate_from = PLL_DEFAULT_LANG;
+            $source_lang = woody_pll_default_lang();
         } else {
-            $translate_from = current($this->existingLanguages($assoc_args['source']));
-            if (empty($translate_from)) {
+            $source_lang = current($this->existingLanguages($assoc_args['source']));
+            if (empty($source_lang)) {
                 output_error('Argument manquant ou invalide "--source=fr"');
                 exit();
             }
@@ -254,7 +255,7 @@ class TranslateCommands
             output_error('Argument manquant ou invalide "--target=en,de"');
             exit();
         } else {
-            $translate_to = $this->existingLanguages($assoc_args['target']);
+            $target_langs = $this->existingLanguages($assoc_args['target']);
         }
 
         // Get source
@@ -269,17 +270,17 @@ class TranslateCommands
             $auto_translate = false;
         }
 
-        if (!empty($translate_from) && !empty($translate_to)) {
-            foreach ($translate_to as $lang) {
-                output_h1(sprintf('Traduction %s > %s', $translate_from, $lang));
+        if (!empty($source_lang) && !empty($target_langs)) {
+            foreach ($target_langs as $target_lang) {
+                output_h1(sprintf('Traduction %s > %s', $source_lang, $target_lang));
                 // Do not translate language into the same language
-                if ($lang != $translate_from) {
+                if ($target_lang != $source_lang) {
                     foreach ($taxonomies as $taxonomy) {
                         if (!get_taxonomy($taxonomy)) {
                             output_error(sprintf("La taxonomie '%s' n'existe pas", $taxonomy));
                         } else {
                             output_h2(sprintf('Traduction des termes de la taxonomie %s', $taxonomy));
-                            $this->translateTerms($taxonomy, $translate_from, $lang, $auto_translate);
+                            $this->translateTerms($taxonomy, $source_lang, $target_lang, $auto_translate);
                         }
                     }
 
@@ -291,40 +292,40 @@ class TranslateCommands
         }
     }
 
-    private function translateTerms($taxonomy, $translate_from, $translate_to, $auto_translate = false, $parent = 0)
+    private function translateTerms($taxonomy, $source_lang, $target_lang, $auto_translate = false, $parent = 0)
     {
         $terms = get_terms([
             'taxonomy' => $taxonomy,
             'hide_empty' => false,
             'parent' => $parent,
-            'lang' => $translate_from
+            'lang' => $source_lang
         ]);
 
         if (!empty($terms)) {
             foreach ($terms as $term) {
                 ++$this->count;
                 output_h3(sprintf('Traduction du tag "%s" (%s)', $term->name, $term->term_id));
-                $tr_term_id = pll_get_term($term->term_id, $translate_to);
+                $tr_term_id = pll_get_term($term->term_id, $target_lang);
 
                 if (!empty($tr_term_id)) {
                     // Si on est en mode "auto_translate" == force, on cherche un traducteur automatique (dans un autre addon par exemple)
                     if ($auto_translate === 'force') {
-                        do_action('woody_auto_translate_term', $tr_term_id, $taxonomy);
+                        do_action('woody_auto_translate_term', $tr_term_id, $taxonomy, $source_lang);
                     }
 
-                    output_warning(sprintf('Tag N°%s déjà traduit vers "%s" (traduction N°%s)', $term->term_id, strtoupper($translate_to), $tr_term_id));
+                    output_warning(sprintf('Tag N°%s déjà traduit vers "%s" (traduction N°%s)', $term->term_id, strtoupper($target_lang), $tr_term_id));
                 } else {
-                    $tr_term_id = PLL()->sync_content->duplicate_term(null, $term, $translate_to);
+                    $tr_term_id = PLL()->sync_content->duplicate_term(null, $term, $target_lang);
 
                     if ($auto_translate === true) {
-                        do_action('woody_auto_translate_term', $tr_term_id, $taxonomy);
+                        do_action('woody_auto_translate_term', $tr_term_id, $taxonomy, $source_lang);
                     }
 
                     output_success(sprintf('%s (N°%s) > (N°%s)', $term->name, $term->term_id, $tr_term_id));
                 }
 
                 // Traduire les enfants
-                $this->translateTerms($taxonomy, $translate_from, $translate_to, $auto_translate, $term->term_id);
+                $this->translateTerms($taxonomy, $source_lang, $target_lang, $auto_translate, $term->term_id);
             }
         } elseif ($parent == 0) {
             output_error(sprintf('Aucun tag à traduire dans la taxonomie %s', $taxonomy));
@@ -337,22 +338,22 @@ class TranslateCommands
     public function fields($args, $assoc_args)
     {
         // Get target
-        $source = empty($assoc_args['source']) ? 'fr' : current($this->existingLanguages($assoc_args['source']));
+        $source_lang = empty($assoc_args['source']) ? woody_pll_default_lang() : current($this->existingLanguages($assoc_args['source']));
 
         // Get target
         if (!empty($assoc_args['post']) && is_numeric($assoc_args['post'])) {
             $post = get_post($assoc_args['post']);
-            $this->translateFields($post, $source);
+            $this->translateFields($post, $source_lang);
         } else {
             // Get target
             if (empty($assoc_args['lang'])) {
                 output_error('Argument manquant ou invalide "--lang=en"');
                 exit();
             } else {
-                $lang = $this->existingLanguages($assoc_args['lang']);
+                $target_lang = $this->existingLanguages($assoc_args['lang']);
             }
 
-            if ($lang == $source) {
+            if ($target_lang == $source_lang) {
                 output_error('Ne pas corriger en se basant sur la même langue');
                 exit();
             }
@@ -370,7 +371,7 @@ class TranslateCommands
             $args = [
                 'post_status' => 'any',
                 'post_type' => $post_types,
-                'lang' => $lang,
+                'lang' => $target_lang,
                 'posts_per_page' => 1,
             ];
 
@@ -382,7 +383,7 @@ class TranslateCommands
             $args = [
                 'post_status' => 'any',
                 'post_parent' => 0,
-                'lang' => $lang,
+                'lang' => $target_lang,
                 'post_type' => $post_types,
                 'posts_per_page' => -1,
                 'orderby' => 'menu_order',
@@ -392,19 +393,19 @@ class TranslateCommands
             $query_result = new \WP_Query($args);
             if (!empty($query_result->posts)) {
                 foreach ($query_result->posts as $post) {
-                    $this->translateFieldsAndChildren($post, $source);
+                    $this->translateFieldsAndChildren($post, $source_lang);
                 }
 
                 output_success('Posts corrigés avec succès');
             } else {
-                output_error(sprintf('0 post à corriger. Etes-vous certain que la langue (%s) existe, et que des pages existent dans cette langue.', $lang));
+                output_error(sprintf('0 post à corriger. Etes-vous certain que la langue (%s) existe, et que des pages existent dans cette langue.', $target_lang));
             }
         }
     }
 
-    private function translateFieldsAndChildren($post, $source)
+    private function translateFieldsAndChildren($post, $source_lang)
     {
-        $this->translateFields($post, $source);
+        $this->translateFields($post, $source_lang);
 
         $args = [
             'post_status' => 'any',
@@ -418,17 +419,17 @@ class TranslateCommands
         $wpQuery = new \WP_Query($args);
         if (!empty($wpQuery->posts)) {
             foreach ($wpQuery->posts as $children_post) {
-                $this->translateFieldsAndChildren($children_post, $source);
+                $this->translateFieldsAndChildren($children_post, $source_lang);
             }
         }
     }
 
-    private function translateFields($post, $source)
+    private function translateFields($post, $source_lang)
     {
         ++$this->count;
         output_h3(sprintf('%s/%s - Correction du post N°%s', $this->count, $this->total, $post->ID));
 
-        $tr_post_id = pll_get_post($post->ID, $source);
+        $tr_post_id = pll_get_post($post->ID, $source_lang);
         $post_metas = get_post_meta($post->ID);
         $lang = pll_get_post_language($post->ID);
 
@@ -459,18 +460,18 @@ class TranslateCommands
         }
     }
 
-    private function translate_meta($value, $key, $lang, $tr_post_id, $post_id)
+    private function translate_meta($value, $key, $source_lang, $tr_post_id, $post_id)
     {
         if (substr($key, -4) == 'link') {
             $value = (is_array($value)) ? maybe_unserialize(current($value)) : $value;
             if (is_array($value) && !empty($value['url'])) {
                 $url_to_postid = url_to_postid($value['url']);
-                $pll_post_id = (empty($url_to_postid)) ? null : pll_get_post($url_to_postid, $lang);
+                $pll_post_id = (empty($url_to_postid)) ? null : pll_get_post($url_to_postid, $source_lang);
                 $value['url'] = (empty($pll_post_id)) ? $value['url'] : get_permalink($pll_post_id);
                 return maybe_serialize($value);
             }
         } else {
-            return $this->pllacfAutoTranslate->translate_meta($value, $key, $lang, $tr_post_id, $post_id);
+            return $this->pllacfAutoTranslate->translate_meta($value, $key, $source_lang, $tr_post_id, $post_id);
         }
     }
 
@@ -483,7 +484,7 @@ class TranslateCommands
         $args = [
             'post_status' => 'any',
             'post_type' => 'attachment',
-            'lang' => PLL_DEFAULT_LANG,
+            'lang' => woody_pll_default_lang(),
             'posts_per_page' => -1,
         ];
 
@@ -502,7 +503,7 @@ class TranslateCommands
                 }
             }
         } else {
-            output_error(sprintf('0 post à traduire. Etes-vous certain que la langue (%s) existe, et que des médias existent dans cette langue.', PLL_DEFAULT_LANG));
+            output_error(sprintf('0 post à traduire. Etes-vous certain que la langue (%s) existe, et que des médias existent dans cette langue.', woody_pll_default_lang()));
         }
     }
 }
