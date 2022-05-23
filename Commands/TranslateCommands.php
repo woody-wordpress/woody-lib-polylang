@@ -460,18 +460,18 @@ class TranslateCommands
         }
     }
 
-    private function translate_meta($value, $key, $source_lang, $tr_post_id, $post_id)
+    private function translate_meta($value, $key, $lang, $tr_post_id, $post_id)
     {
         if (substr($key, -4) == 'link') {
             $value = (is_array($value)) ? maybe_unserialize(current($value)) : $value;
             if (is_array($value) && !empty($value['url'])) {
                 $url_to_postid = url_to_postid($value['url']);
-                $pll_post_id = (empty($url_to_postid)) ? null : pll_get_post($url_to_postid, $source_lang);
+                $pll_post_id = (empty($url_to_postid)) ? null : pll_get_post($url_to_postid, $lang);
                 $value['url'] = (empty($pll_post_id)) ? $value['url'] : get_permalink($pll_post_id);
                 return maybe_serialize($value);
             }
         } else {
-            return $this->pllacfAutoTranslate->translate_meta($value, $key, $source_lang, $tr_post_id, $post_id);
+            return $this->pllacfAutoTranslate->translate_meta($value, $key, $lang, $tr_post_id, $post_id);
         }
     }
 

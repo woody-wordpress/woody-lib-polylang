@@ -1,7 +1,7 @@
 {
     "name": "woody-wordpress/woody-lib-polylang",
     "type": "wordpress-vendor",
-    "version": "2.7.0",
+    "version": "2.7.1",
     "description": "This plugin adds functionalities and configuration for Polylang Plugin",
     "license": "GPL-2.0",
     "authors": [
