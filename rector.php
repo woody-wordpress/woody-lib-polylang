@@ -11,7 +11,10 @@ use Rector\Naming\Rector\Foreach_\RenameForeachValueVariableToMatchExprVariableR
 use Rector\CodeQuality\Rector\Array_\ArrayThisCallToThisMethodCallRector;
 use Rector\CodeQuality\Rector\Array_\CallableThisArrayToAnonymousFunctionRector;
 use Rector\CodingStyle\Rector\ClassConst\RemoveFinalFromConstRector;
+use Rector\CodingStyle\Rector\Encapsed\EncapsedStringsToSprintfRector;
 use Rector\DeadCode\Rector\ClassMethod\RemoveUnusedPromotedPropertyRector;
+use Rector\Php74\Rector\FuncCall\ArraySpreadInsteadOfArrayMergeRector;
+use Rector\Php55\Rector\String_\StringClassNameToClassConstantRector;
 
 return static function (RectorConfig $rectorConfig): void {
     $rectorConfig->paths([
@@ -27,6 +30,9 @@ return static function (RectorConfig $rectorConfig): void {
         ArrayThisCallToThisMethodCallRector::class, // Transform add_action + add_filter
         RemoveUnusedPromotedPropertyRector::class, // Rule PHP8.0
         RemoveFinalFromConstRector::class, // Rule PHP8.1
+        ArraySpreadInsteadOfArrayMergeRector::class, // array_merge is easier to read than array_spread
+        StringClassNameToClassConstantRector::class, // defined('WP_CLI') replace defined(\WP_CLI::class)
+        EncapsedStringsToSprintfRector::class // sprintf replace
     ]);
 
     // define sets of rules
