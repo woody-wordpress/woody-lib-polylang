@@ -9,7 +9,7 @@
 namespace Woody\Lib\Polylang\Commands;
 
 // WP_SITE_KEY=superot wp woody:translate post --post=1234 --target=en,de --deepl=true
-// WP_SITE_KEY=superot wp woody:translate posts --source=fr --target=en,de --addon=roadbook --deepl=true
+// WP_SITE_KEY=superot wp woody:translate posts --source=fr --target=en,de --types=roadbook --deepl=true
 // WP_SITE_KEY=superot wp woody:translate terms --source=fr --target=en,de --tax=themes,places --deepl=true
 // WP_SITE_KEY=superot wp woody:translate fields --post=1234 --source=fr
 // WP_SITE_KEY=superot wp woody:translate fields --lang=en --source=fr
@@ -462,10 +462,22 @@ class TranslateCommands
 
     private function translate_meta($value, $key, $lang, $tr_post_id, $post_id)
     {
-        if (substr($key, -4) == 'link') {
+        if (substr($key, -4) == 'text' && is_array($value) && !empty($value[0])) {
+            $string = current($value);
+            preg_match_all('#href="([^"]+)"#', $string, $matches);
+            if (is_array($matches) && is_array($matches[1])) {
+                foreach ($matches[1] as $url) {
+                    $url_to_postid = $this->url_to_postid($url);
+                    $pll_post_id = (empty($url_to_postid)) ? null : pll_get_post($url_to_postid, $lang);
+                    $permalink = (empty($pll_post_id)) ? null : get_permalink($pll_post_id);
+                    $string = (empty($permalink)) ? $string : str_replace($url, $permalink, $string);
+                }
+                return maybe_serialize($string);
+            }
+        } elseif (substr($key, -4) == 'link') {
             $value = (is_array($value)) ? maybe_unserialize(current($value)) : $value;
             if (is_array($value) && !empty($value['url'])) {
-                $url_to_postid = url_to_postid($value['url']);
+                $url_to_postid = $this->url_to_postid($value['url']);
                 $pll_post_id = (empty($url_to_postid)) ? null : pll_get_post($url_to_postid, $lang);
                 $value['url'] = (empty($pll_post_id)) ? $value['url'] : get_permalink($pll_post_id);
                 return maybe_serialize($value);
@@ -473,6 +485,25 @@ class TranslateCommands
         } else {
             return $this->pllacfAutoTranslate->translate_meta($value, $key, $lang, $tr_post_id, $post_id);
         }
+    }
+
+    private function url_to_postid($url)
+    {
+        $url_to_postid = url_to_postid($url);
+        if (empty($url_to_postid)) {
+            $parse_url = parse_url($url);
+            if (!empty($parse_url['path'])) {
+                $path = (substr($parse_url['path'], -1) == '/') ? substr($parse_url['path'], 0, -1) : $parse_url['path'];
+
+                global $wpdb;
+                $sql = "SELECT action_data FROM `{$wpdb->base_prefix}redirection_items` WHERE match_url = '" . $path . "' AND status = 'enabled' ORDER BY position ASC LIMIT 1;";
+                $results = $wpdb->get_results($sql);
+                if (!empty($results) && !empty($results[0]) && !empty($results[0]->action_data)) {
+                    return url_to_postid($results[0]->action_data);
+                }
+            }
+        }
+        return $url_to_postid;
     }
 
     /**
