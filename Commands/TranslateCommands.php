@@ -462,17 +462,19 @@ class TranslateCommands
 
     private function translate_meta($value, $key, $lang, $tr_post_id, $post_id)
     {
-        if (substr($key, -4) == 'text' && is_array($value) && !empty($value[0])) {
-            $string = current($value);
-            preg_match_all('#href="([^"]+)"#', $string, $matches);
-            if (is_array($matches) && is_array($matches[1])) {
-                foreach ($matches[1] as $url) {
-                    $url_to_postid = $this->url_to_postid($url);
-                    $pll_post_id = (empty($url_to_postid)) ? null : pll_get_post($url_to_postid, $lang);
-                    $permalink = (empty($pll_post_id)) ? null : get_permalink($pll_post_id);
-                    $string = (empty($permalink)) ? $string : str_replace($url, $permalink, $string);
+        if ((substr($key, -4) == 'text') || (substr($key, -11) == 'description') || (substr($key, -5) == 'title') || (substr($key, -4) == 'desc')) {
+            $string = (is_array($value)) ? current($value) : $value;
+            if (!empty($string)) {
+                preg_match_all('#href="([^"]+)"#', $string, $matches);
+                if (is_array($matches) && is_array($matches[1])) {
+                    foreach ($matches[1] as $url) {
+                        $url_to_postid = $this->url_to_postid($url);
+                        $pll_post_id = (empty($url_to_postid)) ? null : pll_get_post($url_to_postid, $lang);
+                        $permalink = (empty($pll_post_id)) ? null : get_permalink($pll_post_id);
+                        $string = (empty($permalink)) ? $string : str_replace($url, $permalink, $string);
+                    }
+                    return maybe_serialize($string);
                 }
-                return maybe_serialize($string);
             }
         } elseif (substr($key, -4) == 'link') {
             $value = (is_array($value)) ? maybe_unserialize(current($value)) : $value;
