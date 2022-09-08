@@ -21,7 +21,7 @@ final class Polylang extends Module
 
     public function initialize(ParameterManager $parameterManager, Container $container)
     {
-        define('WOODY_LIB_POLYLANG_VERSION', '2.9.1');
+        define('WOODY_LIB_POLYLANG_VERSION', '2.9.2');
         define('WOODY_LIB_POLYLANG_ROOT', __FILE__);
         define('WOODY_LIB_POLYLANG_DIR_ROOT', dirname(WOODY_LIB_POLYLANG_ROOT));
         define('WOODY_LIB_POLYLANG_URL', basename(__DIR__) . '/Resources/Assets');
@@ -174,7 +174,16 @@ final class Polylang extends Module
     {
         $screen = get_current_screen();
         if (!empty($screen->id) && strpos($screen->id, 'languages_page_woody-polylang-options') !== false) {
-            wp_enqueue_style('lib-admin-polylang-stylesheet', $this->addonAssetPath('woody-lib-polylang', 'css/main.css'), [], null);
+            wp_enqueue_style('woody-lib-polylang-admin-options-stylesheet', $this->addonAssetPath('woody-lib-polylang', 'css/admin-options.css'), [], null);
+            wp_enqueue_script('woody-lib-polylang-admin-options', $this->addonAssetPath('woody-lib-polylang', 'js/admin-options.js'), ['jquery'], WOODY_LIB_POLYLANG_VERSION, true);
+        }
+
+        global $pagenow;
+        if ($pagenow == 'post.php' || $pagenow == 'post-new.php') {
+            wp_enqueue_style('woody-lib-polylang-edit-post-stylesheet', $this->addonAssetPath('woody-lib-polylang', 'css/edit-post.css'), [], null);
+            wp_enqueue_script('woody-lib-polylang-edit-post', $this->addonAssetPath('woody-lib-polylang', 'js/edit-post.js'), ['jquery'], WOODY_LIB_POLYLANG_VERSION, true);
+        } elseif ($pagenow == 'post.php' || $pagenow == 'post-new.php' || $pagenow == 'edit-tags.php' || $pagenow == 'edit.php') {
+            wp_enqueue_script('woody-lib-polylang-admin-post', $this->addonAssetPath('woody-lib-polylang', 'js/admin-post.js'), [], WOODY_LIB_POLYLANG_VERSION, true);
         }
     }
 

@@ -1,0 +1,21 @@
+/**
+ * Woody Polylang
+ * @author      Leo POIROUX
+ * @copyright   2022 Raccourci Agency
+*/
+
+// Metabox Post
+//#post-translations .pll-sync-column button:not(.wp-ui-text-highlight),
+#pll-duplicate {
+    display: none;
+}
+
+#select-post-language {
+    .button-lock {
+        padding: 0 6px;
+
+        .dashicons {
+            line-height: 26px;
+        }
+    }
+}
