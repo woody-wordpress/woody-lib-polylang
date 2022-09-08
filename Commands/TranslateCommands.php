@@ -473,6 +473,7 @@ class TranslateCommands
                         $permalink = (empty($pll_post_id)) ? null : get_permalink($pll_post_id);
                         $string = (empty($permalink)) ? $string : str_replace($url, $permalink, $string);
                     }
+
                     return maybe_serialize($string);
                 }
             }
@@ -505,6 +506,7 @@ class TranslateCommands
                 }
             }
         }
+
         return $url_to_postid;
     }
 

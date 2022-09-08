@@ -1,3 +1,10 @@
 {
-  "css/main.css": "css/main-e820b063d6.css"
+  "css/admin-options.css": "css/admin-options-e820b063d6.css",
+  "css/edit-post.css": "css/edit-post-8c6f46f5f1.css",
+  "js/admin-options-debug.js": "js/admin-options-debug-4addb92e46.js",
+  "js/admin-options.js": "js/admin-options-fcef5cc1f6.js",
+  "js/admin-post-debug.js": "js/admin-post-debug-c9ec343424.js",
+  "js/admin-post.js": "js/admin-post-2e34d6d436.js",
+  "js/edit-post-debug.js": "js/edit-post-debug-4addb92e46.js",
+  "js/edit-post.js": "js/edit-post-fcef5cc1f6.js"
 }
