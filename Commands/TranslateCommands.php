@@ -109,7 +109,8 @@ class TranslateCommands
         // Get target
         if (!empty($assoc_args['types'])) {
             if ($assoc_args['types'] == 'roadbook') {
-                $post_types = ['woody_rdbk_leaflets', 'woody_rdbk_feeds'];
+                //$post_types = ['woody_rdbk_leaflets', 'woody_rdbk_feeds'];
+                $post_types = ['woody_rdbk_leaflets'];
             } else {
                 $post_types = (strpos($assoc_args['types'], ',') !== false) ? explode(',', $assoc_args['types']) : $assoc_args['types'];
             }
@@ -360,7 +361,8 @@ class TranslateCommands
 
             // Get target
             if (!empty($assoc_args['types']) && $assoc_args['types'] == 'roadbook') {
-                $post_types = ['woody_rdbk_leaflets', 'woody_rdbk_feeds'];
+                //$post_types = ['woody_rdbk_leaflets', 'woody_rdbk_feeds'];
+                $post_types = ['woody_rdbk_leaflets'];
             } elseif (!empty($assoc_args['types'])) {
                 $post_types = (strpos($assoc_args['types'], ',') !== false) ? explode(',', $assoc_args['types']) : $assoc_args['types'];
             } else {
