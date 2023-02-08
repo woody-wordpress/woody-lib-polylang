@@ -128,7 +128,6 @@ class TranslateCommands
         }
 
         if (!empty($source_lang) && !empty($target_langs)) {
-
             // Count Total posts
             $args = [
                 'post_status' => 'any',
@@ -344,7 +343,7 @@ class TranslateCommands
         // Get target
         if (!empty($assoc_args['post']) && is_numeric($assoc_args['post'])) {
             $post = get_post($assoc_args['post']);
-            $this->translateFields($post, $source_lang);
+            $this->translateFields($post, $source_lang, $assoc_args);
         } else {
             // Get target
             if (empty($assoc_args['lang'])) {
@@ -395,7 +394,7 @@ class TranslateCommands
             $query_result = new \WP_Query($args);
             if (!empty($query_result->posts)) {
                 foreach ($query_result->posts as $post) {
-                    $this->translateFieldsAndChildren($post, $source_lang);
+                    $this->translateFieldsAndChildren($post, $source_lang, $assoc_args);
                 }
 
                 output_success('Posts corrigés avec succès');
@@ -405,9 +404,9 @@ class TranslateCommands
         }
     }
 
-    private function translateFieldsAndChildren($post, $source_lang)
+    private function translateFieldsAndChildren($post, $source_lang, $assoc_args)
     {
-        $this->translateFields($post, $source_lang);
+        $this->translateFields($post, $source_lang, $assoc_args);
 
         $args = [
             'post_status' => 'any',
@@ -421,12 +420,12 @@ class TranslateCommands
         $wpQuery = new \WP_Query($args);
         if (!empty($wpQuery->posts)) {
             foreach ($wpQuery->posts as $children_post) {
-                $this->translateFieldsAndChildren($children_post, $source_lang);
+                $this->translateFieldsAndChildren($children_post, $source_lang, $assoc_args);
             }
         }
     }
 
-    private function translateFields($post, $source_lang)
+    private function translateFields($post, $source_lang, $assoc_args = [])
     {
         ++$this->count;
         output_h3(sprintf('%s/%s - Correction du post N°%s', $this->count, $this->total, $post->ID));
@@ -441,14 +440,17 @@ class TranslateCommands
         if (!empty($post_metas) && !empty($lang)) {
             foreach ($post_metas as $key => $value) {
                 if (substr($key, 0, 1) != '_') {
+                    $value =  (is_array($value)) ? current($value) : $value;
                     $new_value = $this->translate_meta($value, $key, $lang, $tr_post_id, $post->ID);
 
                     // Si différent on met à jour
-                    $value = (is_array($value)) ? current($value) : $value;
-                    $new_value = (is_array($new_value)) ? current($new_value) : $new_value;
                     if (!empty($value) && (!empty($new_value) && $value != $new_value)) {
-                        update_post_meta($post->ID, $key, maybe_unserialize($new_value));
-                        output_success(sprintf('%s (%s > %s)', $key, $value, $new_value));
+                        if ($assoc_args['dry']) {
+                            output_log(sprintf('wp_postmeta %s : %s will be replaced by %s for post %s', $key, $value, $new_value, $post->ID));
+                        } else {
+                            update_post_meta($post->ID, $key, $new_value);
+                            output_success(sprintf('%s (%s > %s)', $key, $value, $new_value));
+                        }
                         ++$fixed_post_metas;
                     }
                 }
@@ -465,27 +467,25 @@ class TranslateCommands
     private function translate_meta($value, $key, $lang, $tr_post_id, $post_id)
     {
         if ((substr($key, -4) == 'text') || (substr($key, -11) == 'description') || (substr($key, -5) == 'title') || (substr($key, -4) == 'desc')) {
-            $string = (is_array($value)) ? current($value) : $value;
-            if (!empty($string)) {
-                preg_match_all('#href="([^"]+)"#', $string, $matches);
+            if (!empty($value)) {
+                preg_match_all('#href="([^"]+)"#', $value, $matches);
                 if (is_array($matches) && is_array($matches[1])) {
                     foreach ($matches[1] as $url) {
                         $url_to_postid = $this->url_to_postid($url);
                         $pll_post_id = (empty($url_to_postid)) ? null : pll_get_post($url_to_postid, $lang);
                         $permalink = (empty($pll_post_id)) ? null : get_permalink($pll_post_id);
-                        $string = (empty($permalink)) ? $string : str_replace($url, $permalink, $string);
+                        $value = (empty($permalink)) ? $value : str_replace($url, $permalink, $value);
                     }
 
-                    return maybe_serialize($string);
+                    return $value;
                 }
             }
         } elseif (substr($key, -4) == 'link') {
-            $value = (is_array($value)) ? maybe_unserialize(current($value)) : $value;
             if (is_array($value) && !empty($value['url'])) {
                 $url_to_postid = $this->url_to_postid($value['url']);
                 $pll_post_id = (empty($url_to_postid)) ? null : pll_get_post($url_to_postid, $lang);
                 $value['url'] = (empty($pll_post_id)) ? $value['url'] : get_permalink($pll_post_id);
-                return maybe_serialize($value);
+                return $value;
             }
         } else {
             return $this->pllacfAutoTranslate->translate_meta($value, $key, $lang, $tr_post_id, $post_id);
