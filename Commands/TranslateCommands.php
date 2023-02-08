@@ -438,7 +438,7 @@ class TranslateCommands
         if (!empty($post_metas) && !empty($lang)) {
             foreach ($post_metas as $key => $value) {
                 if (substr($key, 0, 1) != '_') {
-                    $value =  (is_array($value)) ? maybe_unserialize(current($value)) : $value;
+                    $value =  (is_array($value)) ? current($value) : $value;
                     $new_value = $this->translate_meta($value, $key, $lang, $tr_post_id, $post->ID);
 
                     // Si différent on met à jour
@@ -446,7 +446,7 @@ class TranslateCommands
                         if ($assoc_args['dry']) {
                             output_log(sprintf('wp_postmeta %s : %s will be replaced by %s for post %s', $key, $value, $new_value, $post->ID));
                         } else {
-                            update_post_meta($post->ID, $key, maybe_unserialize($new_value));
+                            update_post_meta($post->ID, $key, $new_value);
                             output_success(sprintf('%s (%s > %s)', $key, $value, $new_value));
                         }
                         ++$fixed_post_metas;
