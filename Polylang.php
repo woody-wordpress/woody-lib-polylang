@@ -21,7 +21,7 @@ final class Polylang extends Module
 
     public function initialize(ParameterManager $parameterManager, Container $container)
     {
-        define('WOODY_LIB_POLYLANG_VERSION', '2.9.2');
+        define('WOODY_LIB_POLYLANG_VERSION', '2.10.0');
         define('WOODY_LIB_POLYLANG_ROOT', __FILE__);
         define('WOODY_LIB_POLYLANG_DIR_ROOT', dirname(WOODY_LIB_POLYLANG_ROOT));
         define('WOODY_LIB_POLYLANG_URL', basename(__DIR__) . '/Resources/Assets');
@@ -577,7 +577,6 @@ final class Polylang extends Module
         if (!empty($currentSeasonLangs)) {
             $hreflangs = [];
             foreach ($currentSeasonLangs as $langObject) {
-
                 // On exclut les langues non actives. PLL n'exclut pas la langue courante, donc on fait de même
                 //(Google recommends to include self link https://support.google.com/webmasters/answer/189077?hl=en)
                 if (!in_array($langObject->slug, $woody_lang_enable)) {
