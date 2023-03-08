@@ -517,11 +517,13 @@ class TranslateCommands
      */
     public function medias($args, $assoc_args)
     {
+        $source_lang = (empty($assoc_args['source'])) ? woody_pll_default_lang() : $assoc_args['source'];
+
         // Count Total posts
         $args = [
             'post_status' => 'any',
             'post_type' => 'attachment',
-            'lang' => woody_pll_default_lang(),
+            'lang' => $source_lang,
             'posts_per_page' => -1,
         ];
 
@@ -540,7 +542,7 @@ class TranslateCommands
                 }
             }
         } else {
-            output_error(sprintf('0 post à traduire. Etes-vous certain que la langue (%s) existe, et que des médias existent dans cette langue.', woody_pll_default_lang()));
+            output_error(sprintf('0 post à traduire. Etes-vous certain que la langue (%s) existe, et que des médias existent dans cette langue.', $source_lang));
         }
     }
 }
