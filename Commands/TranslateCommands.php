@@ -440,7 +440,7 @@ class TranslateCommands
         if (!empty($post_metas) && !empty($lang)) {
             foreach ($post_metas as $key => $value) {
                 if (substr($key, 0, 1) != '_') {
-                    $value =  (is_array($value)) ? current($value) : $value;
+                    $value =  (is_array($value)) ? current($value) : maybe_unserialize($value);
                     $new_value = $this->translate_meta($value, $key, $lang, $tr_post_id, $post->ID);
 
                     // Si différent on met à jour
