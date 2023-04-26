@@ -21,7 +21,7 @@ final class Polylang extends Module
 
     public function initialize(ParameterManager $parameterManager, Container $container)
     {
-        define('WOODY_LIB_POLYLANG_VERSION', '2.10.3');
+        define('WOODY_LIB_POLYLANG_VERSION', '2.11.0');
         define('WOODY_LIB_POLYLANG_ROOT', __FILE__);
         define('WOODY_LIB_POLYLANG_DIR_ROOT', dirname(WOODY_LIB_POLYLANG_ROOT));
         define('WOODY_LIB_POLYLANG_URL', basename(__DIR__) . '/Resources/Assets');
@@ -69,6 +69,7 @@ final class Polylang extends Module
         add_filter('pll_predefined_flags', [$this, 'pllPredefinedFlags'], 10, 2);
         add_filter('pll_flag', [$this, 'pllFlag'], 10, 2);
         add_filter('pll_rel_hreflang_attributes', [$this, 'pllRelHreflangAttributes']);
+        add_filter('woody_hreflangs', [$this, 'woodyHrefLangs']);
         add_filter('woody_robots_txt', [$this, 'robotsTxt'], 10, 2);
 
         // Override SiteConfig
@@ -593,6 +594,18 @@ final class Polylang extends Module
                 if (!in_array($lang, $woody_lang_enable)) {
                     unset($hreflangs[$lang]);
                 }
+            }
+        }
+
+        return apply_filters('woody_hreflangs', $hreflangs);
+    }
+
+    public function woodyHrefLangs($hreflangs)
+    {
+        $woody_hreflangs = get_field('woody_hreflangs');
+        if(is_array($woody_hreflangs) && !empty($woody_hreflangs)) {
+            foreach ($woody_hreflangs as $woody_hreflang) {
+                $hreflangs[$woody_hreflang['langcode']] = $woody_hreflang['url'];
             }
         }
 
