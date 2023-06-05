@@ -509,28 +509,6 @@ final class Polylang extends Module
             }
         }
 
-        // Get ACF Fields (Author, Lat, Lng)
-        $fields = get_fields($attachment_id);
-        if (!empty($fields)) {
-            foreach ($fields as $selector => $value) {
-                if ($selector == 'media_linked_page') {
-                    continue;
-                }
-
-                //output_log([' - update_field', $selector, $value, $t_attachment_id]);
-                update_field($selector, $value, $t_attachment_id);
-            }
-        }
-
-        // Sync attachment taxonomies
-        $tags = [];
-        $sync_taxonomies = ['attachment_types', 'attachment_hashtags', 'attachment_categories'];
-        foreach ($sync_taxonomies as $taxonomy) {
-            $terms = wp_get_post_terms($attachment_id, $taxonomy);
-            wp_set_post_terms($t_attachment_id, $terms, $taxonomy, false);
-            //output_log([' - wp_set_post_terms', $t_attachment_id, $terms, $taxonomy]);
-        }
-
         // On assigne la langue
         pll_set_post_language($tr_id, $target_lang);
 
@@ -552,6 +530,9 @@ final class Polylang extends Module
          * @param string $slug    language code of the new translation
          */
         do_action('pll_translate_media', $attachment_id, $tr_id, $target_lang);
+
+        // Sync Trads
+        do_action('save_attachment', $attachment_id);
 
         /**
          * Ajout de Raccourci Agency pour traduire automatiquement avec DeepL
