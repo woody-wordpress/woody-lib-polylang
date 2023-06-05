@@ -502,7 +502,7 @@ final class Polylang extends Module
         remove_filter('pll_enable_duplicate_media', '__return_false', 99); // Restore automatic duplicate at upload
 
         // Copy metadata, attached file and alternative text
-        foreach (array('_wp_attachment_metadata', '_wp_attached_file', '_wp_attachment_image_alt', 'sizes') as $key) {
+        foreach (array('_wp_attachment_metadata', '_wp_attached_file', '_wp_attachment_image_alt') as $key) {
             if ($meta = get_post_meta($attachment_id, $key, true)) {
                 //output_log([' - add_post_meta', $tr_id, $key, $meta]);
                 add_post_meta($tr_id, $key, $meta);
