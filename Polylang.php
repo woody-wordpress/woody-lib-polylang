@@ -488,7 +488,6 @@ final class Polylang extends Module
         }
 
         $post = get_post($attachment_id);
-
         if (empty($post)) {
             return;
         }
@@ -532,7 +531,7 @@ final class Polylang extends Module
         do_action('pll_translate_media', $attachment_id, $tr_id, $target_lang);
 
         // Sync Trads
-        do_action('save_attachment', $attachment_id);
+        do_action('woody_sync_attachment', $attachment_id);
 
         /**
          * Ajout de Raccourci Agency pour traduire automatiquement avec DeepL
