@@ -63,8 +63,8 @@ final class Polylang extends Module
 
         // Surcharge de fonction Polylang par défaut (ajout de drapeau par exemple)
         add_filter('wpssoc_user_redirect_url', [$this, 'wpssocUserRedirectUrl'], 10, 1);
-        add_filter('pll_is_cache_active', [$this, 'isCacheActive']);
-        add_filter('pll_copy_taxonomies', [$this, 'copyAttachmentTypes'], 10, 2);
+        add_filter('pll_is_cache_active', [$this, 'pllIsCacheActive']);
+        add_filter('pll_copy_taxonomies', [$this, 'pllCopyTaxonomies'], 10, 2);
         add_filter('pll_languages_list', [$this, 'pllLanguagesList'], 10, 2);
         add_filter('pll_predefined_flags', [$this, 'pllPredefinedFlags'], 10, 2);
         add_filter('pll_flag', [$this, 'pllFlag'], 10, 2);
@@ -223,20 +223,18 @@ final class Polylang extends Module
     /**
      * @return boolean
      */
-    public function isCacheActive()
+    public function pllIsCacheActive()
     {
         return true;
     }
 
     // define the pll_copy_taxonomies callback
-    public function copyAttachmentTypes($taxonomies, $sync)
+    public function pllCopyTaxonomies($taxonomies, $sync)
     {
-        $custom_taxs = [
-            'attachment_types' => 'attachment_types',
-            'attachment_hashtags' => 'attachment_hashtags',
-            'attachment_categories' => 'attachment_categories',
-        ];
-        return array_merge($custom_taxs, $taxonomies);
+        $taxonomies[] = 'attachment_types';
+        $taxonomies[] = 'attachment_hashtags';
+        $taxonomies[] = 'attachment_categories';
+        return $taxonomies;
     }
 
     // --------------------------------
@@ -481,14 +479,13 @@ final class Polylang extends Module
     // Copy of native Polylang function
     // PLL()->posts->create_media_translation($attachment_id, $lang);
     // --------------------------------
-    public function woodyPllCreateMediaTranslation($post_id, $source_lang, $target_lang)
+    public function woodyPllCreateMediaTranslation($attachment_id, $source_lang, $target_lang)
     {
-        if (empty($post_id)) {
+        if (empty($attachment_id)) {
             return;
         }
 
-        $post = get_post($post_id);
-
+        $post = get_post($attachment_id);
         if (empty($post)) {
             return;
         }
@@ -503,16 +500,18 @@ final class Polylang extends Module
 
         // Copy metadata, attached file and alternative text
         foreach (array('_wp_attachment_metadata', '_wp_attached_file', '_wp_attachment_image_alt') as $key) {
-            if ($meta = get_post_meta($post_id, $key, true)) {
+            if ($meta = get_post_meta($attachment_id, $key, true)) {
+                //output_log([' - add_post_meta', $tr_id, $key, $meta]);
                 add_post_meta($tr_id, $key, $meta);
             }
         }
 
+        // On assigne la langue
         pll_set_post_language($tr_id, $target_lang);
 
-        $translations = pll_get_post_translations($post_id);
-        if (!$translations && $src_lang = pll_get_post($post_id)) {
-            $translations[$src_lang->slug] = $post_id;
+        $translations = pll_get_post_translations($attachment_id);
+        if (empty($translations) && $src_lang = pll_get_post($attachment_id)) {
+            $translations[$src_lang->slug] = $attachment_id;
         }
 
         $translations[$target_lang] = $tr_id;
@@ -523,17 +522,20 @@ final class Polylang extends Module
          *
          * @since 1.6.4
          *
-         * @param int    $post_id post id of the source media
+         * @param int    $attachment_id post id of the source media
          * @param int    $tr_id   post id of the new media translation
          * @param string $slug    language code of the new translation
          */
-        do_action('pll_translate_media', $post_id, $tr_id, $target_lang);
+        do_action('pll_translate_media', $attachment_id, $tr_id, $target_lang);
+
+        // Sync Trads
+        do_action('woody_sync_attachment', $attachment_id);
 
         /**
          * Ajout de Raccourci Agency pour traduire automatiquement avec DeepL
          */
         do_action('woody_auto_translate_media', $tr_id, $source_lang);
-        output_success(sprintf('Média traduit en %s (%s > %s)', strtoupper($target_lang), $post_id, $tr_id));
+        output_success(sprintf('Média traduit en %s (%s > %s)', strtoupper($target_lang), $attachment_id, $tr_id));
 
         return $tr_id;
     }

@@ -536,7 +536,7 @@ class TranslateCommands
                 ++$this->count;
                 output_h3(sprintf('%s/%s - Traduction du média N°%s', $this->count, $this->total, $post->ID));
                 if (wp_attachment_is_image($post->ID)) {
-                    do_action('save_attachment', $post->ID);
+                    do_action('woody_save_attachment', $post->ID);
                 } else {
                     output_log("Ce média n'est pas une image");
                 }
