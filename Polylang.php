@@ -63,8 +63,8 @@ final class Polylang extends Module
 
         // Surcharge de fonction Polylang par défaut (ajout de drapeau par exemple)
         add_filter('wpssoc_user_redirect_url', [$this, 'wpssocUserRedirectUrl'], 10, 1);
-        add_filter('pll_is_cache_active', [$this, 'isCacheActive']);
-        add_filter('pll_copy_taxonomies', [$this, 'copyAttachmentTypes'], 10, 2);
+        add_filter('pll_is_cache_active', [$this, 'pllIsCacheActive']);
+        add_filter('pll_copy_taxonomies', [$this, 'pllCopyTaxonomies'], 10, 2);
         add_filter('pll_languages_list', [$this, 'pllLanguagesList'], 10, 2);
         add_filter('pll_predefined_flags', [$this, 'pllPredefinedFlags'], 10, 2);
         add_filter('pll_flag', [$this, 'pllFlag'], 10, 2);
@@ -223,20 +223,18 @@ final class Polylang extends Module
     /**
      * @return boolean
      */
-    public function isCacheActive()
+    public function pllIsCacheActive()
     {
         return true;
     }
 
     // define the pll_copy_taxonomies callback
-    public function copyAttachmentTypes($taxonomies, $sync)
+    public function pllCopyTaxonomies($taxonomies, $sync)
     {
-        $custom_taxs = [
-            'attachment_types' => 'attachment_types',
-            'attachment_hashtags' => 'attachment_hashtags',
-            'attachment_categories' => 'attachment_categories',
-        ];
-        return array_merge($custom_taxs, $taxonomies);
+        $taxonomies[] = 'attachment_types';
+        $taxonomies[] = 'attachment_hashtags';
+        $taxonomies[] = 'attachment_categories';
+        return $taxonomies;
     }
 
     // --------------------------------
