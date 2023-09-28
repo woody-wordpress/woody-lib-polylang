@@ -481,6 +481,7 @@ class TranslateCommands
                 }
             }
         } elseif (substr($key, -4) == 'link') {
+            $value = maybe_unserialize($value);
             if (is_array($value) && !empty($value['url'])) {
                 $url_to_postid = $this->url_to_postid($value['url']);
                 $pll_post_id = (empty($url_to_postid)) ? null : pll_get_post($url_to_postid, $lang);
