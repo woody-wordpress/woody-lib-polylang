@@ -51,6 +51,12 @@ function woody_pll_get_lang_by_slug($slug)
     return apply_filters('woody_pll_get_lang_by_slug', $slug);
 }
 
+// Retourne le code locale à partir du slug (ex: fr_FR)
+function woody_pll_get_locale_by_slug($slug)
+{
+    return apply_filters('woody_pll_get_locale_by_slug', $slug);
+}
+
 // Retourne le switcher de langue
 // Si current_season passé en paramètre, ne retourne que les langues de la même saison
 // ex : $current_season = 'hiver'

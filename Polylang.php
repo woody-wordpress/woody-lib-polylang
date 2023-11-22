@@ -21,7 +21,7 @@ final class Polylang extends Module
 
     public function initialize(ParameterManager $parameterManager, Container $container)
     {
-        define('WOODY_LIB_POLYLANG_VERSION', '2.12.1');
+        define('WOODY_LIB_POLYLANG_VERSION', '2.13.0');
         define('WOODY_LIB_POLYLANG_ROOT', __FILE__);
         define('WOODY_LIB_POLYLANG_DIR_ROOT', dirname(WOODY_LIB_POLYLANG_ROOT));
         define('WOODY_LIB_POLYLANG_URL', basename(__DIR__) . '/Resources/Assets');
@@ -86,6 +86,7 @@ final class Polylang extends Module
         add_filter('woody_pll_get_post_language', [$this, 'woodyPllGetPostLanguage'], 10, 1);
         add_filter('woody_pll_get_post_season', [$this, 'woodyPllGetPostSeason'], 10, 1);
         add_filter('woody_pll_get_lang_by_slug', [$this, 'woodyPllGetLangBySlug'], 10, 1);
+        add_filter('woody_pll_get_locale_by_slug', [$this, 'woodyPllGetLocaleBySlug'], 10, 1);
         add_filter('woody_pll_the_languages', [$this, 'woodyPllTheLanguages'], 10, 1);
         add_filter('woody_pll_the_locales', [$this, 'woodyPllTheLocales'], 10);
         add_filter('woody_pll_the_seasons', [$this, 'woodyPllTheSeasons'], 10);
@@ -425,6 +426,33 @@ final class Polylang extends Module
                 $code_lang = $this->locale_to_lang($language->locale);
                 if ($code_lang == $slug) {
                     return $code_lang;
+                }
+            }
+
+            output_error(sprintf('Impossible de trouver la langue de ce slug "%s"', $slug));
+        }
+    }
+
+    public function woodyPllGetLocaleBySlug($slug)
+    {
+        if (function_exists('pll_languages_list')) {
+            if (empty($slug)) {
+                output_error('Impossible de trouver la langue de ce slug vide');
+                return;
+            }
+
+            $languages = pll_languages_list(['fields' => '']);
+            foreach ($languages as $language) {
+                if ($language->slug == $slug) {
+                    return $language->locale;
+                }
+            }
+
+            // Fallback if $slug is already a xx_XX code_locale
+            foreach ($languages as $language) {
+                $code_locale = $language->locale;
+                if ($code_locale == $slug) {
+                    return $code_locale;
                 }
             }
 
