@@ -21,7 +21,7 @@ final class Polylang extends Module
 
     public function initialize(ParameterManager $parameterManager, Container $container)
     {
-        define('WOODY_LIB_POLYLANG_VERSION', '2.13.0');
+        define('WOODY_LIB_POLYLANG_VERSION', '2.14.0');
         define('WOODY_LIB_POLYLANG_ROOT', __FILE__);
         define('WOODY_LIB_POLYLANG_DIR_ROOT', dirname(WOODY_LIB_POLYLANG_ROOT));
         define('WOODY_LIB_POLYLANG_URL', basename(__DIR__) . '/Resources/Assets');
@@ -62,6 +62,7 @@ final class Polylang extends Module
         add_action('wp_loaded', [$this, 'wpLoaded'], 30);
 
         // Surcharge de fonction Polylang par défaut (ajout de drapeau par exemple)
+        add_filter('load_textdomain_mofile', [$this, 'loadTextdomainMofile'], 10, 2);
         add_filter('wpssoc_user_redirect_url', [$this, 'wpssocUserRedirectUrl'], 10, 1);
         add_filter('pll_is_cache_active', [$this, 'pllIsCacheActive']);
         add_filter('pll_copy_taxonomies', [$this, 'pllCopyTaxonomies'], 10, 2);
@@ -195,6 +196,19 @@ final class Polylang extends Module
         $siteConfig['current_season'] = $this->woodyPllCurrentSeason();
         $siteConfig['languages'] = $this->woodyPllTheLocales();
         return $siteConfig;
+    }
+
+    public function loadTextdomainMofile($mofile, $domain)
+    {
+        if (preg_match('/([a-z]{2}_[A-Z]{2})/i', $mofile, $matches)) {
+            if(in_array($matches[0], ['en_US', 'en_AU', 'en_NZ', 'en_SG'])) {
+                return str_replace($matches[0], 'en_GB', $mofile);
+            } elseif(in_array($matches[0], ['fr_BE', 'fr_CA', 'fr_CH'])) {
+                return str_replace($matches[0], 'fr_FR', $mofile);
+            }
+        }
+
+        return $mofile;
     }
 
     /**
