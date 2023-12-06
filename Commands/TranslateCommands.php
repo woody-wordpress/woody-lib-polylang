@@ -184,12 +184,30 @@ class TranslateCommands
         $tr_post_id = pll_get_post($post->ID, $target_lang);
 
         if (!empty($tr_post_id)) {
-            // Si on est en mode "auto_translate" == force, on cherche un traducteur automatique (dans un autre addon par exemple)
-            if ($auto_translate === 'force') {
-                do_action('woody_auto_translate_post', $tr_post_id, $source_lang);
-            }
-
             output_warning(sprintf('Post N°%s déjà traduit vers %s (traduction N°%s)', $post->ID, strtoupper($target_lang), $tr_post_id));
+
+            // Si on est en mode "auto_translate" == force, on cherche un traducteur automatique (dans un autre addon par exemple)
+            // Et on importe le contenu source dans le contenu target pour refaire une traduction complète
+            if ($auto_translate === 'force') {
+
+                // On récupère la liste des posts suynchronisés avec le post source
+                $synchronized_posts = PLL()->sync_post->get($post->ID);
+                $synchronized_langs = (!empty($synchronized_posts)) ? array_keys($synchronized_posts) : [];
+
+                // On sauvegarde le fait que le post traduit doit être synchronisé avec le post source
+                PLL()->sync_post->save_group($post->ID, array_merge($synchronized_langs, [$target_lang]));
+
+                // On sauvegarde le post source pour importer la langue source dans le post traduit.
+                do_action('save_post', $post->ID, $post, true);
+
+                // On remet les synchronisations comme avant
+                PLL()->sync_post->save_group($post->ID, $synchronized_posts);
+
+                // On traduit le post synchronisé (qui contient désormais des textes dans la langue source)
+                do_action('woody_auto_translate_post', $tr_post_id, $source_lang);
+
+                output_success(sprintf('Post N°%s re-traduit intégralement vers %s (traduction N°%s)', $post->ID, strtoupper($target_lang), $tr_post_id));
+            }
         } else {
             $tr_post_id = PLL()->sync_post->copy_post($post->ID, $target_lang, false);
 
