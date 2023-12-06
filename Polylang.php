@@ -21,7 +21,7 @@ final class Polylang extends Module
 
     public function initialize(ParameterManager $parameterManager, Container $container)
     {
-        define('WOODY_LIB_POLYLANG_VERSION', '2.15.0');
+        define('WOODY_LIB_POLYLANG_VERSION', '2.16.0');
         define('WOODY_LIB_POLYLANG_ROOT', __FILE__);
         define('WOODY_LIB_POLYLANG_DIR_ROOT', dirname(WOODY_LIB_POLYLANG_ROOT));
         define('WOODY_LIB_POLYLANG_URL', basename(__DIR__) . '/Resources/Assets');
@@ -88,6 +88,7 @@ final class Polylang extends Module
         add_filter('woody_pll_get_post_season', [$this, 'woodyPllGetPostSeason'], 10, 1);
         add_filter('woody_pll_get_lang_by_slug', [$this, 'woodyPllGetLangBySlug'], 10, 1);
         add_filter('woody_pll_get_locale_by_slug', [$this, 'woodyPllGetLocaleBySlug'], 10, 1);
+        add_filter('woody_pll_get_slug_by_locale', [$this, 'woodyPllGetSlugByLocale'], 10, 1);
         add_filter('woody_pll_the_languages', [$this, 'woodyPllTheLanguages'], 10, 1);
         add_filter('woody_pll_the_locales', [$this, 'woodyPllTheLocales'], 10);
         add_filter('woody_pll_the_seasons', [$this, 'woodyPllTheSeasons'], 10);
@@ -474,6 +475,28 @@ final class Polylang extends Module
         }
     }
 
+    public function woodyPllGetSlugByLocale($locale)
+    {
+        if (function_exists('pll_languages_list')) {
+            if (empty($locale)) {
+                output_error('Impossible de trouver la langue de ce slug vide');
+                return;
+            }
+
+            // Dans le cas d'un hreflang on reçoit la locale au format fr-FR
+            $locale = str_replace('-', '_', $locale);
+
+            $languages = pll_languages_list(['fields' => '']);
+            foreach ($languages as $language) {
+                if ($language->locale == $locale) {
+                    return $language->slug;
+                }
+            }
+
+            output_error(sprintf('Impossible de trouver la langue de cette locale "%s"', $locale));
+        }
+    }
+
     public function woodyPllGetPostLanguage($post_id = null)
     {
         if (function_exists('pll_get_post_language') && !empty($post_id)) {
@@ -635,7 +658,10 @@ final class Polylang extends Module
             }
         } else {
             foreach ($hreflangs as $lang => $hreflang) {
-                if (!in_array($lang, $woody_lang_enable)) {
+                // Si on reçoit un code hreflang au format en-GB car nous avons plusieurs variantes d'anglais
+                $slug = (strpos($lang, '-') !== false) ? woody_pll_get_slug_by_locale($lang) : $lang;
+
+                if (!in_array($slug, $woody_lang_enable)) {
                     unset($hreflangs[$lang]);
                 }
             }
