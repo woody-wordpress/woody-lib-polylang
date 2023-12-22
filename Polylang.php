@@ -667,6 +667,17 @@ final class Polylang extends Module
             }
         }
 
+        // Si une page n'est pas publiée, alors on supprime la balise hreflang correspondante
+        if(!empty($hreflangs)) {
+            foreach ($hreflangs as $lang => $hreflang) {
+                $post_id = url_to_postid($hreflang);
+                $post_status = get_post_status($post_id);
+                if(!empty($post_status) && $post_status != 'publish') {
+                    unset($hreflangs[$lang]);
+                }
+            }
+        }
+
         return apply_filters('woody_hreflangs', $hreflangs);
     }
 
