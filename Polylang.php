@@ -21,7 +21,7 @@ final class Polylang extends Module
 
     public function initialize(ParameterManager $parameterManager, Container $container)
     {
-        define('WOODY_LIB_POLYLANG_VERSION', '2.16.0');
+        define('WOODY_LIB_POLYLANG_VERSION', '2.16.1');
         define('WOODY_LIB_POLYLANG_ROOT', __FILE__);
         define('WOODY_LIB_POLYLANG_DIR_ROOT', dirname(WOODY_LIB_POLYLANG_ROOT));
         define('WOODY_LIB_POLYLANG_URL', basename(__DIR__) . '/Resources/Assets');
@@ -662,6 +662,17 @@ final class Polylang extends Module
                 $slug = (strpos($lang, '-') !== false) ? woody_pll_get_slug_by_locale($lang) : $lang;
 
                 if (!in_array($slug, $woody_lang_enable)) {
+                    unset($hreflangs[$lang]);
+                }
+            }
+        }
+
+        // Si une page n'est pas publiée, alors on supprime la balise hreflang correspondante
+        if(!empty($hreflangs)) {
+            foreach ($hreflangs as $lang => $hreflang) {
+                $post_id = url_to_postid($hreflang);
+                $post_status = get_post_status($post_id);
+                if(!empty($post_status) && $post_status != 'publish') {
                     unset($hreflangs[$lang]);
                 }
             }
