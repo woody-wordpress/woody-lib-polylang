@@ -23,15 +23,12 @@ class PolylangCommands
 
     private $count;
 
-    private $pllacfAutoTranslate;
-
     private $polylangManager;
 
     public function __construct(PolylangManager $polylangManager)
     {
         $this->total = 0;
         $this->count = 0;
-        $this->pllacfAutoTranslate = new \PLL_ACF_Auto_Translate();
         $this->polylangManager = $polylangManager;
     }
 

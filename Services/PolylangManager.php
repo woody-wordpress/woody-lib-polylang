@@ -9,6 +9,13 @@ namespace Woody\Lib\Polylang\Services;
 
 class PolylangManager
 {
+    private $pllacfAutoTranslate;
+
+    public function __construct()
+    {
+        $this->pllacfAutoTranslate = new \PLL_ACF_Auto_Translate();
+    }
+
     public function woodyTranslatePost($post, $target_lang, $auto_translate = false)
     {
         // Si on post_id est passé à la fonction
@@ -54,7 +61,7 @@ class PolylangManager
 
                 // On récupère la liste des posts suynchronisés avec le post source
                 $synchronized_posts = PLL()->sync_post->get($post->ID);
-                $synchronized_langs = (!empty($synchronized_posts)) ? array_keys($synchronized_posts) : [];
+                $synchronized_langs = (empty($synchronized_posts)) ? [] : array_keys($synchronized_posts);
 
                 // On sauvegarde le fait que le post traduit doit être synchronisé avec le post source
                 PLL()->sync_post->save_group($post->ID, array_merge($synchronized_langs, [$target_lang]));
@@ -119,6 +126,7 @@ class PolylangManager
                             update_post_meta($post->ID, $key, $new_value);
                             output_success(sprintf('%s (%s > %s)', $key, $value, $new_value));
                         }
+
                         ++$fixed_post_metas;
                     }
                 }

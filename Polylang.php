@@ -16,7 +16,9 @@ use Woody\Lib\Polylang\Commands\PolylangCommands;
 final class Polylang extends Module
 {
     private $seasonsFlags;
+
     protected $polylangManager;
+
     protected static $key = 'woody_lib_polylang';
 
     public function initialize(ParameterManager $parameterManager, Container $container)
@@ -206,7 +208,7 @@ final class Polylang extends Module
 
     public function loadTextdomainMofile($mofile, $domain)
     {
-        if (preg_match('/([a-z]{2}_[A-Z]{2})/i', $mofile, $matches)) {
+        if (preg_match('#([a-z]{2}_[A-Z]{2})#i', $mofile, $matches)) {
             if(in_array($matches[0], ['en_US', 'en_AU', 'en_NZ', 'en_SG'])) {
                 return str_replace($matches[0], 'en_GB', $mofile);
             } elseif(in_array($matches[0], ['fr_BE', 'fr_CA', 'fr_CH'])) {
