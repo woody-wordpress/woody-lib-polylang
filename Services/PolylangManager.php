@@ -59,18 +59,18 @@ class PolylangManager
             // Et on importe le contenu source dans le contenu target pour refaire une traduction complète
             if ($sync_before_translate) {
 
-                // On récupère la liste des posts suynchronisés avec le post source
-                $synchronized_posts = PLL()->sync_post->get($post->ID);
+                // On récupère la liste des posts synchronisés avec le post source
+                $synchronized_posts = PLL()->sync_post->sync_model->get($post->ID);
                 $synchronized_langs = (empty($synchronized_posts)) ? [] : array_keys($synchronized_posts);
 
                 // On sauvegarde le fait que le post traduit doit être synchronisé avec le post source
-                PLL()->sync_post->save_group($post->ID, array_merge($synchronized_langs, [$target_lang]));
+                PLL()->sync_post->sync_model->save_group($post->ID, array_merge($synchronized_langs, [$target_lang]));
 
                 // On sauvegarde le post source pour importer la langue source dans le post traduit.
                 do_action('save_post', $post->ID, $post, true);
 
                 // On remet les synchronisations comme avant
-                PLL()->sync_post->save_group($post->ID, $synchronized_posts);
+                PLL()->sync_post->sync_model->save_group($post->ID, $synchronized_posts);
 
                 // On traduit le post synchronisé (qui contient désormais des textes dans la langue source)
                 if ($auto_translate) {
@@ -80,7 +80,7 @@ class PolylangManager
                 output_success(sprintf('Post N°%s re-traduit intégralement vers %s (traduction N°%s)', $post->ID, strtoupper($target_lang), $tr_post_id));
             }
         } else {
-            $tr_post_id = PLL()->sync_post->copy_post($post->ID, $target_lang, false);
+            $tr_post_id = PLL()->sync_post->sync_model->copy_post($post->ID, $target_lang, false);
 
             // Si on est en mode "auto_translate", on cherche un traducteur automatique (dans un autre addon par exemple)
             if ($auto_translate) {

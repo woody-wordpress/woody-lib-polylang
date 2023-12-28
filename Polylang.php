@@ -100,8 +100,8 @@ final class Polylang extends Module
         add_filter('woody_default_lang_post_title', [$this, 'woodyDefaultLangPostTitle'], 10, 1);
 
         // Action polylangManager
-        add_action('woody_translate_post', [$this->polylangManager, 'woodyTranslatePost'], 10, 2);
-        add_action('woody_translate_fields', [$this->polylangManager, 'woodyTranslateFields'], 10, 2);
+        add_action('woody_translate_post', [$this->polylangManager, 'woodyTranslatePost'], 10, 4);
+        add_action('woody_translate_fields', [$this->polylangManager, 'woodyTranslateFields'], 10, 4);
     }
 
     public function registerCommands()
