@@ -11,7 +11,12 @@ class Services
 
     private static function definitions()
     {
-        return [];
+        return [
+            'polylang.manager' => [
+                'class'     => \Woody\Lib\Polylang\Services\PolylangManager::class,
+                'arguments' => []
+            ]
+        ];
     }
 
     public static function loadDefinitions()

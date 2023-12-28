@@ -11,17 +11,19 @@ namespace Woody\Lib\Polylang;
 use Woody\App\Container;
 use Woody\Modules\Module;
 use Woody\Services\ParameterManager;
-use Woody\Lib\Polylang\Commands\TranslateCommands;
+use Woody\Lib\Polylang\Commands\PolylangCommands;
 
 final class Polylang extends Module
 {
     private $seasonsFlags;
 
+    protected $polylangManager;
+
     protected static $key = 'woody_lib_polylang';
 
     public function initialize(ParameterManager $parameterManager, Container $container)
     {
-        define('WOODY_LIB_POLYLANG_VERSION', '2.16.1');
+        define('WOODY_LIB_POLYLANG_VERSION', '2.17.0');
         define('WOODY_LIB_POLYLANG_ROOT', __FILE__);
         define('WOODY_LIB_POLYLANG_DIR_ROOT', dirname(WOODY_LIB_POLYLANG_ROOT));
         define('WOODY_LIB_POLYLANG_URL', basename(__DIR__) . '/Resources/Assets');
@@ -40,6 +42,7 @@ final class Polylang extends Module
         $this->seasonsFlags = $this->getSeasonsFlags();
 
         parent::initialize($parameterManager, $container);
+        $this->polylangManager = $this->container->get('polylang.manager');
         require_once WOODY_LIB_POLYLANG_DIR_ROOT . '/Helpers/Helpers.php';
     }
 
@@ -95,11 +98,15 @@ final class Polylang extends Module
         add_filter('woody_pll_default_lang', [$this, 'woodyPllDefaultLang'], 10, 1);
         add_filter('woody_pll_default_lang_code', [$this, 'woodyPllDefaultlangCode'], 10, 1);
         add_filter('woody_default_lang_post_title', [$this, 'woodyDefaultLangPostTitle'], 10, 1);
+
+        // Action polylangManager
+        add_action('woody_translate_post', [$this->polylangManager, 'woodyTranslatePost'], 10, 4);
+        add_action('woody_translate_fields', [$this->polylangManager, 'woodyTranslateFields'], 10, 4);
     }
 
     public function registerCommands()
     {
-        \WP_CLI::add_command('woody:translate', new TranslateCommands());
+        \WP_CLI::add_command('woody:translate', new PolylangCommands($this->polylangManager));
     }
 
     public function metaLangUsagesRedirect()
@@ -201,7 +208,7 @@ final class Polylang extends Module
 
     public function loadTextdomainMofile($mofile, $domain)
     {
-        if (preg_match('/([a-z]{2}_[A-Z]{2})/i', $mofile, $matches)) {
+        if (preg_match('#([a-z]{2}_[A-Z]{2})#i', $mofile, $matches)) {
             if(in_array($matches[0], ['en_US', 'en_AU', 'en_NZ', 'en_SG'])) {
                 return str_replace($matches[0], 'en_GB', $mofile);
             } elseif(in_array($matches[0], ['fr_BE', 'fr_CA', 'fr_CH'])) {

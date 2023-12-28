@@ -8,26 +8,29 @@
 
 namespace Woody\Lib\Polylang\Commands;
 
+use Woody\Lib\Polylang\Services\PolylangManager;
+
 // WP_SITE_KEY=superot wp woody:translate post --post=1234 --target=en,de --deepl=true
+// WP_SITE_KEY=superot wp woody:translate post --post=1234 --target=en,de --deepl=true --sync=true
 // WP_SITE_KEY=superot wp woody:translate posts --source=fr --target=en,de --types=roadbook --deepl=true
 // WP_SITE_KEY=superot wp woody:translate terms --source=fr --target=en,de --tax=themes,places --deepl=true
 // WP_SITE_KEY=superot wp woody:translate fields --post=1234 --source=fr
 // WP_SITE_KEY=superot wp woody:translate fields --lang=en --source=fr
 // WP_SITE_KEY=superot wp woody:translate medias
 
-class TranslateCommands
+class PolylangCommands
 {
     private $total;
 
     private $count;
 
-    private $pllacfAutoTranslate;
+    private $polylangManager;
 
-    public function __construct()
+    public function __construct(PolylangManager $polylangManager)
     {
         $this->total = 0;
         $this->count = 0;
-        $this->pllacfAutoTranslate = new \PLL_ACF_Auto_Translate();
+        $this->polylangManager = $polylangManager;
     }
 
     private function existingLanguages($langs)
@@ -63,23 +66,35 @@ class TranslateCommands
         // Get auto_translate deepL
         if (!empty($assoc_args['deepl']) && filter_var($assoc_args['deepl'], FILTER_VALIDATE_BOOLEAN) == true) {
             $auto_translate = true;
-        } elseif (!empty($assoc_args['deepl']) && $assoc_args['deepl'] == 'force') {
-            $auto_translate = 'force';
         } else {
             $auto_translate = false;
+        }
+
+        // Sync source post before translate
+        if (!empty($assoc_args['sync']) && filter_var($assoc_args['sync'], FILTER_VALIDATE_BOOLEAN) == true) {
+            $sync_before_translate = true;
+        } else {
+            $sync_before_translate = false;
         }
 
         if (!empty($source_lang) && !empty($target_langs) && !empty($post)) {
             foreach ($target_langs as $target_lang) {
                 // Do not translate language into the same language
                 if ($target_lang != $source_lang) {
-                    $this->translatePost($post, $source_lang, $target_lang, $auto_translate);
+                    $this->translatePost($post, $source_lang, $target_lang, $auto_translate, $sync_before_translate);
                     output_success('Post traduit avec succès');
                 } else {
                     output_warning('Ne pas traduire dans la même langue');
                 }
             }
         }
+    }
+
+    private function translatePost($post, $source_lang, $target_lang, $auto_translate = false, $sync_before_translate = false)
+    {
+        ++$this->count;
+        output_h3(sprintf('%s/%s - Traduction du post N°%s vers %s', $this->count, $this->total, $post->ID, strtoupper($target_lang)));
+        $this->polylangManager->translatePost($post, $source_lang, $target_lang, $auto_translate, $sync_before_translate);
     }
 
     /**
@@ -121,10 +136,15 @@ class TranslateCommands
         // Get auto_translate deepL
         if (!empty($assoc_args['deepl']) && filter_var($assoc_args['deepl'], FILTER_VALIDATE_BOOLEAN) == true) {
             $auto_translate = true;
-        } elseif (!empty($assoc_args['deepl']) && $assoc_args['deepl'] == 'force') {
-            $auto_translate = 'force';
         } else {
             $auto_translate = false;
+        }
+
+        // Sync source post before translate
+        if (!empty($assoc_args['sync']) && filter_var($assoc_args['sync'], FILTER_VALIDATE_BOOLEAN) == true) {
+            $sync_before_translate = true;
+        } else {
+            $sync_before_translate = false;
         }
 
         if (!empty($source_lang) && !empty($target_langs)) {
@@ -158,7 +178,7 @@ class TranslateCommands
                     output_h2(sprintf('Traduction %s > %s', $source_lang, $target_lang));
                     if ($target_lang != $source_lang) {
                         foreach ($query_result->posts as $post) {
-                            $this->translatePostAndChildren($post, $source_lang, $target_lang, $auto_translate);
+                            $this->translatePostAndChildren($post, $source_lang, $target_lang, $auto_translate, false);
                         }
                     } else {
                         output_error('Ne pas traduire dans la même langue');
@@ -170,70 +190,9 @@ class TranslateCommands
         }
     }
 
-    private function translatePost($post, $source_lang, $target_lang, $auto_translate = false)
+    private function translatePostAndChildren($post, $source_lang, $target_lang, $auto_translate = false, $sync_before_translate = false)
     {
-        ++$this->count;
-        output_h3(sprintf('%s/%s - Traduction du post N°%s vers %s', $this->count, $this->total, $post->ID, strtoupper($target_lang)));
-
-        if ($target_lang == $source_lang) {
-            output_error('Ne pas traduire dans la même langue');
-            exit();
-        }
-
-        // Check if translated post already exists
-        $tr_post_id = pll_get_post($post->ID, $target_lang);
-
-        if (!empty($tr_post_id)) {
-            output_warning(sprintf('Post N°%s déjà traduit vers %s (traduction N°%s)', $post->ID, strtoupper($target_lang), $tr_post_id));
-
-            // Si on est en mode "auto_translate" == force, on cherche un traducteur automatique (dans un autre addon par exemple)
-            // Et on importe le contenu source dans le contenu target pour refaire une traduction complète
-            if ($auto_translate === 'force') {
-
-                // On récupère la liste des posts suynchronisés avec le post source
-                $synchronized_posts = PLL()->sync_post->get($post->ID);
-                $synchronized_langs = (!empty($synchronized_posts)) ? array_keys($synchronized_posts) : [];
-
-                // On sauvegarde le fait que le post traduit doit être synchronisé avec le post source
-                PLL()->sync_post->save_group($post->ID, array_merge($synchronized_langs, [$target_lang]));
-
-                // On sauvegarde le post source pour importer la langue source dans le post traduit.
-                do_action('save_post', $post->ID, $post, true);
-
-                // On remet les synchronisations comme avant
-                PLL()->sync_post->save_group($post->ID, $synchronized_posts);
-
-                // On traduit le post synchronisé (qui contient désormais des textes dans la langue source)
-                do_action('woody_auto_translate_post', $tr_post_id, $source_lang);
-
-                output_success(sprintf('Post N°%s re-traduit intégralement vers %s (traduction N°%s)', $post->ID, strtoupper($target_lang), $tr_post_id));
-            }
-        } else {
-            $tr_post_id = PLL()->sync_post->copy_post($post->ID, $target_lang, false);
-
-            // Si on est en mode "auto_translate", on cherche un traducteur automatique (dans un autre addon par exemple)
-            if ($auto_translate === true) {
-                do_action('woody_auto_translate_post', $tr_post_id, $source_lang);
-            } else {
-                // Permet de créer une page avec suffixe de langue dans le titre et le permalien lors de la traduction de pages en masse
-                // Don't use wp_update_post to avoid conflict (reverse sync).
-                global $wpdb;
-
-                $post_title = get_the_title($post->ID);
-                $post_title .= ' - ' . strtoupper($target_lang);
-                $wpdb->update($wpdb->posts, ['post_title' => $post_title, 'post_name' => sanitize_title($post_title)], ['ID' => $tr_post_id]);
-                output_success(sprintf('Titre du post changé en "%s"', $post_title));
-                clean_post_cache($tr_post_id);
-
-                $tr_post = get_post($tr_post_id);
-                do_action('save_post', $tr_post_id, $tr_post, true);
-            }
-        }
-    }
-
-    private function translatePostAndChildren($post, $source_lang, $target_lang, $auto_translate = false)
-    {
-        $this->translatePost($post, $source_lang, $target_lang, $auto_translate);
+        $this->translatePost($post, $source_lang, $target_lang, $auto_translate, $sync_before_translate);
 
         $args = [
             'post_status' => 'any',
@@ -282,10 +241,15 @@ class TranslateCommands
         // Get auto_translate deepL
         if (!empty($assoc_args['deepl']) && filter_var($assoc_args['deepl'], FILTER_VALIDATE_BOOLEAN) == true) {
             $auto_translate = true;
-        } elseif (!empty($assoc_args['deepl']) && $assoc_args['deepl'] == 'force') {
-            $auto_translate = 'force';
         } else {
             $auto_translate = false;
+        }
+
+        // Sync source post before translate
+        if (!empty($assoc_args['sync']) && filter_var($assoc_args['sync'], FILTER_VALIDATE_BOOLEAN) == true) {
+            $sync_before_translate = true;
+        } else {
+            $sync_before_translate = false;
         }
 
         if (!empty($source_lang) && !empty($target_langs)) {
@@ -298,7 +262,7 @@ class TranslateCommands
                             output_error(sprintf("La taxonomie '%s' n'existe pas", $taxonomy));
                         } else {
                             output_h2(sprintf('Traduction des termes de la taxonomie %s', $taxonomy));
-                            $this->translateTerms($taxonomy, $source_lang, $target_lang, $auto_translate);
+                            $this->translateTerms($taxonomy, $source_lang, $target_lang, $auto_translate, $sync_before_translate);
                         }
                     }
 
@@ -310,7 +274,7 @@ class TranslateCommands
         }
     }
 
-    private function translateTerms($taxonomy, $source_lang, $target_lang, $auto_translate = false, $parent = 0)
+    private function translateTerms($taxonomy, $source_lang, $target_lang, $auto_translate = false, $sync_before_translate = false, $parent = 0)
     {
         $terms = get_terms([
             'taxonomy' => $taxonomy,
@@ -326,8 +290,8 @@ class TranslateCommands
                 $tr_term_id = pll_get_term($term->term_id, $target_lang);
 
                 if (!empty($tr_term_id)) {
-                    // Si on est en mode "auto_translate" == force, on cherche un traducteur automatique (dans un autre addon par exemple)
-                    if ($auto_translate === 'force') {
+                    // Si on est en mode "sync_before_translate" == true, on cherche un traducteur automatique (dans un autre addon par exemple)
+                    if ($sync_before_translate) {
                         do_action('woody_auto_translate_term', $tr_term_id, $taxonomy, $source_lang);
                     }
 
@@ -335,7 +299,7 @@ class TranslateCommands
                 } else {
                     $tr_term_id = PLL()->sync_content->duplicate_term(null, $term, $target_lang);
 
-                    if ($auto_translate === true) {
+                    if ($auto_translate) {
                         do_action('woody_auto_translate_term', $tr_term_id, $taxonomy, $source_lang);
                     }
 
@@ -343,7 +307,7 @@ class TranslateCommands
                 }
 
                 // Traduire les enfants
-                $this->translateTerms($taxonomy, $source_lang, $target_lang, $auto_translate, $term->term_id);
+                $this->translateTerms($taxonomy, $source_lang, $target_lang, $auto_translate, false, $term->term_id);
             }
         } elseif ($parent == 0) {
             output_error(sprintf('Aucun tag à traduire dans la taxonomie %s', $taxonomy));
@@ -447,88 +411,7 @@ class TranslateCommands
     {
         ++$this->count;
         output_h3(sprintf('%s/%s - Correction du post N°%s', $this->count, $this->total, $post->ID));
-
-        $tr_post_id = pll_get_post($post->ID, $source_lang);
-        $post_metas = get_post_meta($post->ID);
-        $lang = pll_get_post_language($post->ID);
-
-        $total_post_metas = is_countable($post_metas) ? count($post_metas) : 0;
-        $fixed_post_metas = 0;
-
-        if (!empty($post_metas) && !empty($lang)) {
-            foreach ($post_metas as $key => $value) {
-                if (substr($key, 0, 1) != '_') {
-                    $value =  (is_array($value)) ? current($value) : maybe_unserialize($value);
-                    $new_value = $this->translate_meta($value, $key, $lang, $tr_post_id, $post->ID);
-
-                    // Si différent on met à jour
-                    if (!empty($value) && (!empty($new_value) && $value != $new_value)) {
-                        if ($assoc_args['dry']) {
-                            output_log(sprintf('wp_postmeta %s : %s will be replaced by %s for post %s', $key, $value, $new_value, $post->ID));
-                        } else {
-                            update_post_meta($post->ID, $key, $new_value);
-                            output_success(sprintf('%s (%s > %s)', $key, $value, $new_value));
-                        }
-                        ++$fixed_post_metas;
-                    }
-                }
-            }
-        }
-
-        if (empty($fixed_post_metas)) {
-            output_log('Aucune méta à corriger');
-        } else {
-            output_success(sprintf('%s/%s métas corrigées', $fixed_post_metas, $total_post_metas));
-        }
-    }
-
-    private function translate_meta($value, $key, $lang, $tr_post_id, $post_id)
-    {
-        if ((substr($key, -4) == 'text') || (substr($key, -11) == 'description') || (substr($key, -5) == 'title') || (substr($key, -4) == 'desc')) {
-            if (!empty($value)) {
-                preg_match_all('#href="([^"]+)"#', $value, $matches);
-                if (is_array($matches) && is_array($matches[1])) {
-                    foreach ($matches[1] as $url) {
-                        $url_to_postid = $this->url_to_postid($url);
-                        $pll_post_id = (empty($url_to_postid)) ? null : pll_get_post($url_to_postid, $lang);
-                        $permalink = (empty($pll_post_id)) ? null : get_permalink($pll_post_id);
-                        $value = (empty($permalink)) ? $value : str_replace($url, $permalink, $value);
-                    }
-
-                    return $value;
-                }
-            }
-        } elseif (substr($key, -4) == 'link') {
-            $value = maybe_unserialize($value);
-            if (is_array($value) && !empty($value['url'])) {
-                $url_to_postid = $this->url_to_postid($value['url']);
-                $pll_post_id = (empty($url_to_postid)) ? null : pll_get_post($url_to_postid, $lang);
-                $value['url'] = (empty($pll_post_id)) ? $value['url'] : get_permalink($pll_post_id);
-                return $value;
-            }
-        } else {
-            return $this->pllacfAutoTranslate->translate_meta($value, $key, $lang, $tr_post_id, $post_id);
-        }
-    }
-
-    private function url_to_postid($url)
-    {
-        $url_to_postid = url_to_postid($url);
-        if (empty($url_to_postid)) {
-            $parse_url = parse_url($url);
-            if (!empty($parse_url['path'])) {
-                $path = (substr($parse_url['path'], -1) == '/') ? substr($parse_url['path'], 0, -1) : $parse_url['path'];
-
-                global $wpdb;
-                $sql = "SELECT action_data FROM `{$wpdb->base_prefix}redirection_items` WHERE match_url = '" . $path . "' AND status = 'enabled' ORDER BY position ASC LIMIT 1;";
-                $results = $wpdb->get_results($sql);
-                if (!empty($results) && !empty($results[0]) && !empty($results[0]->action_data)) {
-                    return url_to_postid($results[0]->action_data);
-                }
-            }
-        }
-
-        return $url_to_postid;
+        $this->polylangManager->translateFields($post, $source_lang, $assoc_args);
     }
 
     /**
