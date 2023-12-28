@@ -26,7 +26,6 @@ class PolylangManager
         $source_lang = woody_pll_get_post_language($post->ID);
 
         $this->translatePost($post, $source_lang, $target_lang, $auto_translate, $sync_before_translate);
-        $this->translateFields($post, $source_lang);
     }
 
     public function woodyTranslateFields($post, $source_lang)
