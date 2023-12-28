@@ -16,7 +16,7 @@ class PolylangManager
         $this->pllacfAutoTranslate = new \PLL_ACF_Auto_Translate();
     }
 
-    public function woodyTranslatePost($post, $target_lang, $auto_translate = false)
+    public function woodyTranslatePost($post, $target_lang, $auto_translate = false, $sync_before_translate = false)
     {
         // Si on post_id est passé à la fonction
         if (is_numeric($post)) {
@@ -25,7 +25,7 @@ class PolylangManager
 
         $source_lang = woody_pll_get_post_language($post->ID);
 
-        $this->translatePost($post, $source_lang, $target_lang, $auto_translate);
+        $this->translatePost($post, $source_lang, $target_lang, $auto_translate, $sync_before_translate);
         $this->translateFields($post, $source_lang);
     }
 
@@ -42,7 +42,7 @@ class PolylangManager
     /**
      * POST
      */
-    public function translatePost($post, $source_lang, $target_lang, $auto_translate = false)
+    public function translatePost($post, $source_lang, $target_lang, $auto_translate = false, $sync_before_translate = false)
     {
         if ($target_lang == $source_lang) {
             output_error('Ne pas traduire dans la même langue');
@@ -57,7 +57,7 @@ class PolylangManager
 
             // Si on est en mode "auto_translate" == force, on cherche un traducteur automatique (dans un autre addon par exemple)
             // Et on importe le contenu source dans le contenu target pour refaire une traduction complète
-            if ($auto_translate === 'force') {
+            if ($sync_before_translate) {
 
                 // On récupère la liste des posts suynchronisés avec le post source
                 $synchronized_posts = PLL()->sync_post->get($post->ID);
@@ -73,7 +73,9 @@ class PolylangManager
                 PLL()->sync_post->save_group($post->ID, $synchronized_posts);
 
                 // On traduit le post synchronisé (qui contient désormais des textes dans la langue source)
-                do_action('woody_auto_translate_post', $tr_post_id, $source_lang);
+                if ($auto_translate) {
+                    do_action('woody_auto_translate_post', $tr_post_id, $source_lang);
+                }
 
                 output_success(sprintf('Post N°%s re-traduit intégralement vers %s (traduction N°%s)', $post->ID, strtoupper($target_lang), $tr_post_id));
             }
@@ -81,7 +83,7 @@ class PolylangManager
             $tr_post_id = PLL()->sync_post->copy_post($post->ID, $target_lang, false);
 
             // Si on est en mode "auto_translate", on cherche un traducteur automatique (dans un autre addon par exemple)
-            if ($auto_translate === true) {
+            if ($auto_translate) {
                 do_action('woody_auto_translate_post', $tr_post_id, $source_lang);
             } else {
                 // Permet de créer une page avec suffixe de langue dans le titre et le permalien lors de la traduction de pages en masse

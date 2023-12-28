@@ -11,6 +11,7 @@ namespace Woody\Lib\Polylang\Commands;
 use Woody\Lib\Polylang\Services\PolylangManager;
 
 // WP_SITE_KEY=superot wp woody:translate post --post=1234 --target=en,de --deepl=true
+// WP_SITE_KEY=superot wp woody:translate post --post=1234 --target=en,de --deepl=true --sync=true
 // WP_SITE_KEY=superot wp woody:translate posts --source=fr --target=en,de --types=roadbook --deepl=true
 // WP_SITE_KEY=superot wp woody:translate terms --source=fr --target=en,de --tax=themes,places --deepl=true
 // WP_SITE_KEY=superot wp woody:translate fields --post=1234 --source=fr
@@ -65,17 +66,22 @@ class PolylangCommands
         // Get auto_translate deepL
         if (!empty($assoc_args['deepl']) && filter_var($assoc_args['deepl'], FILTER_VALIDATE_BOOLEAN) == true) {
             $auto_translate = true;
-        } elseif (!empty($assoc_args['deepl']) && $assoc_args['deepl'] == 'force') {
-            $auto_translate = 'force';
         } else {
             $auto_translate = false;
+        }
+
+        // Sync source post before translate
+        if (!empty($assoc_args['sync']) && filter_var($assoc_args['sync'], FILTER_VALIDATE_BOOLEAN) == true) {
+            $sync_before_translate = true;
+        } else {
+            $sync_before_translate = false;
         }
 
         if (!empty($source_lang) && !empty($target_langs) && !empty($post)) {
             foreach ($target_langs as $target_lang) {
                 // Do not translate language into the same language
                 if ($target_lang != $source_lang) {
-                    $this->translatePost($post, $source_lang, $target_lang, $auto_translate);
+                    $this->translatePost($post, $source_lang, $target_lang, $auto_translate, $sync_before_translate);
                     output_success('Post traduit avec succès');
                 } else {
                     output_warning('Ne pas traduire dans la même langue');
@@ -84,11 +90,11 @@ class PolylangCommands
         }
     }
 
-    private function translatePost($post, $source_lang, $target_lang, $auto_translate = false)
+    private function translatePost($post, $source_lang, $target_lang, $auto_translate = false, $sync_before_translate = false)
     {
         ++$this->count;
         output_h3(sprintf('%s/%s - Traduction du post N°%s vers %s', $this->count, $this->total, $post->ID, strtoupper($target_lang)));
-        $this->polylangManager->translatePost($post, $source_lang, $target_lang, $auto_translate);
+        $this->polylangManager->translatePost($post, $source_lang, $target_lang, $auto_translate, $sync_before_translate);
     }
 
     /**
@@ -130,10 +136,15 @@ class PolylangCommands
         // Get auto_translate deepL
         if (!empty($assoc_args['deepl']) && filter_var($assoc_args['deepl'], FILTER_VALIDATE_BOOLEAN) == true) {
             $auto_translate = true;
-        } elseif (!empty($assoc_args['deepl']) && $assoc_args['deepl'] == 'force') {
-            $auto_translate = 'force';
         } else {
             $auto_translate = false;
+        }
+
+        // Sync source post before translate
+        if (!empty($assoc_args['sync']) && filter_var($assoc_args['sync'], FILTER_VALIDATE_BOOLEAN) == true) {
+            $sync_before_translate = true;
+        } else {
+            $sync_before_translate = false;
         }
 
         if (!empty($source_lang) && !empty($target_langs)) {
@@ -167,7 +178,7 @@ class PolylangCommands
                     output_h2(sprintf('Traduction %s > %s', $source_lang, $target_lang));
                     if ($target_lang != $source_lang) {
                         foreach ($query_result->posts as $post) {
-                            $this->translatePostAndChildren($post, $source_lang, $target_lang, $auto_translate);
+                            $this->translatePostAndChildren($post, $source_lang, $target_lang, $auto_translate, false);
                         }
                     } else {
                         output_error('Ne pas traduire dans la même langue');
@@ -179,9 +190,9 @@ class PolylangCommands
         }
     }
 
-    private function translatePostAndChildren($post, $source_lang, $target_lang, $auto_translate = false)
+    private function translatePostAndChildren($post, $source_lang, $target_lang, $auto_translate = false, $sync_before_translate = false)
     {
-        $this->translatePost($post, $source_lang, $target_lang, $auto_translate);
+        $this->translatePost($post, $source_lang, $target_lang, $auto_translate, $sync_before_translate);
 
         $args = [
             'post_status' => 'any',
@@ -230,10 +241,15 @@ class PolylangCommands
         // Get auto_translate deepL
         if (!empty($assoc_args['deepl']) && filter_var($assoc_args['deepl'], FILTER_VALIDATE_BOOLEAN) == true) {
             $auto_translate = true;
-        } elseif (!empty($assoc_args['deepl']) && $assoc_args['deepl'] == 'force') {
-            $auto_translate = 'force';
         } else {
             $auto_translate = false;
+        }
+
+        // Sync source post before translate
+        if (!empty($assoc_args['sync']) && filter_var($assoc_args['sync'], FILTER_VALIDATE_BOOLEAN) == true) {
+            $sync_before_translate = true;
+        } else {
+            $sync_before_translate = false;
         }
 
         if (!empty($source_lang) && !empty($target_langs)) {
@@ -246,7 +262,7 @@ class PolylangCommands
                             output_error(sprintf("La taxonomie '%s' n'existe pas", $taxonomy));
                         } else {
                             output_h2(sprintf('Traduction des termes de la taxonomie %s', $taxonomy));
-                            $this->translateTerms($taxonomy, $source_lang, $target_lang, $auto_translate);
+                            $this->translateTerms($taxonomy, $source_lang, $target_lang, $auto_translate, $sync_before_translate);
                         }
                     }
 
@@ -258,7 +274,7 @@ class PolylangCommands
         }
     }
 
-    private function translateTerms($taxonomy, $source_lang, $target_lang, $auto_translate = false, $parent = 0)
+    private function translateTerms($taxonomy, $source_lang, $target_lang, $auto_translate = false, $sync_before_translate = false, $parent = 0)
     {
         $terms = get_terms([
             'taxonomy' => $taxonomy,
@@ -274,8 +290,8 @@ class PolylangCommands
                 $tr_term_id = pll_get_term($term->term_id, $target_lang);
 
                 if (!empty($tr_term_id)) {
-                    // Si on est en mode "auto_translate" == force, on cherche un traducteur automatique (dans un autre addon par exemple)
-                    if ($auto_translate === 'force') {
+                    // Si on est en mode "sync_before_translate" == true, on cherche un traducteur automatique (dans un autre addon par exemple)
+                    if ($sync_before_translate) {
                         do_action('woody_auto_translate_term', $tr_term_id, $taxonomy, $source_lang);
                     }
 
@@ -283,7 +299,7 @@ class PolylangCommands
                 } else {
                     $tr_term_id = PLL()->sync_content->duplicate_term(null, $term, $target_lang);
 
-                    if ($auto_translate === true) {
+                    if ($auto_translate) {
                         do_action('woody_auto_translate_term', $tr_term_id, $taxonomy, $source_lang);
                     }
 
@@ -291,7 +307,7 @@ class PolylangCommands
                 }
 
                 // Traduire les enfants
-                $this->translateTerms($taxonomy, $source_lang, $target_lang, $auto_translate, $term->term_id);
+                $this->translateTerms($taxonomy, $source_lang, $target_lang, $auto_translate, false, $term->term_id);
             }
         } elseif ($parent == 0) {
             output_error(sprintf('Aucun tag à traduire dans la taxonomie %s', $taxonomy));
