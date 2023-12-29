@@ -23,7 +23,7 @@ final class Polylang extends Module
 
     public function initialize(ParameterManager $parameterManager, Container $container)
     {
-        define('WOODY_LIB_POLYLANG_VERSION', '2.17.0');
+        define('WOODY_LIB_POLYLANG_VERSION', '2.17.1');
         define('WOODY_LIB_POLYLANG_ROOT', __FILE__);
         define('WOODY_LIB_POLYLANG_DIR_ROOT', dirname(WOODY_LIB_POLYLANG_ROOT));
         define('WOODY_LIB_POLYLANG_URL', basename(__DIR__) . '/Resources/Assets');
@@ -69,12 +69,15 @@ final class Polylang extends Module
         add_filter('wpssoc_user_redirect_url', [$this, 'wpssocUserRedirectUrl'], 10, 1);
         add_filter('pll_is_cache_active', [$this, 'pllIsCacheActive']);
         add_filter('pll_copy_taxonomies', [$this, 'pllCopyTaxonomies'], 10, 2);
-        add_filter('pll_languages_list', [$this, 'pllLanguagesList'], 10, 2);
+        //add_filter('pll_languages_list', [$this, 'pllLanguagesList'], 10, 2);
         add_filter('pll_predefined_flags', [$this, 'pllPredefinedFlags'], 10, 2);
         add_filter('pll_flag', [$this, 'pllFlag'], 10, 2);
         add_filter('pll_rel_hreflang_attributes', [$this, 'pllRelHreflangAttributes']);
         add_filter('woody_hreflangs', [$this, 'woodyHrefLangs']);
         add_filter('woody_robots_txt', [$this, 'robotsTxt'], 10, 2);
+        add_filter('pll_language_home_url', [$this, 'pllLanguageSSL'], 10, 2);
+        add_filter('pll_language_search_url', [$this, 'pllLanguageSSL'], 10, 2);
+        add_filter('pll_language_flag_url', [$this, 'pllLanguageSSL'], 10, 2);
 
         // Override SiteConfig
         add_filter('woody_theme_siteconfig', [$this, 'woodyThemeSiteconfig']);
@@ -612,26 +615,25 @@ final class Polylang extends Module
         return $tr_id;
     }
 
+    public function pllLanguageSSL($url)
+    {
+        return str_replace('http://', '//', $url);
+    }
+
     // --------------------------------
     // Polylang Flags
     // --------------------------------
-    public function pllLanguagesList($languages, $obj)
-    {
-        foreach ($languages as $key => $language) {
-            if (FORCE_SSL_ADMIN) {
-                $languages[$key]->home_url = str_replace('http://', 'https://', $language->home_url);
-                $languages[$key]->search_url = str_replace('http://', 'https://', $language->search_url);
-                $languages[$key]->flag_url = str_replace('http://', 'https://', $language->search_url);
-            }
+    // public function pllLanguagesList($languages, $obj)
+    // {
+    //     foreach ($languages as $key => $language) {
+    //         if (array_key_exists($languages[$key]->flag_code, $this->seasonsFlags)) {
+    //             $languages[$key]->flag = '<img src="' . $this->getSeasonFlagUrl($languages[$key]->flag_code) . '" title="' . $languages[$key]->name . '" alt="' . $languages[$key]->name . '" />';
+    //             $languages[$key]->flag_url = $this->getSeasonFlagUrl($languages[$key]->flag_code);
+    //         }
+    //     }
 
-            if (array_key_exists($languages[$key]->flag_code, $this->seasonsFlags)) {
-                $languages[$key]->flag = '<img src="' . $this->getSeasonFlagUrl($languages[$key]->flag_code) . '" title="' . $languages[$key]->name . '" alt="' . $languages[$key]->name . '" />';
-                $languages[$key]->flag_url = $this->getSeasonFlagUrl($languages[$key]->flag_code);
-            }
-        }
-
-        return $languages;
-    }
+    //     return $languages;
+    // }
 
     public function pllFlag($flag, $code)
     {
