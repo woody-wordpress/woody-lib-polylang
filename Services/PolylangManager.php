@@ -104,7 +104,7 @@ class PolylangManager
     /**
      * FIELDS
      */
-    private function translateFields($post, $source_lang, $assoc_args = [])
+    public function translateFields($post, $source_lang, $assoc_args = [])
     {
         $tr_post_id = pll_get_post($post->ID, $source_lang);
         $post_metas = get_post_meta($post->ID);
