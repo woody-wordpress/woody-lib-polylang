@@ -236,7 +236,7 @@ class PolylangCommands
         }
 
         // Get source
-        $taxonomies = empty($assoc_args['tax']) ? ['themes', 'places', 'seasons'] : explode(',', $assoc_args['tax']);
+        $taxonomies = empty($assoc_args['tax']) ? ['themes', 'places', 'seasons', 'targets'] : explode(',', $assoc_args['tax']);
 
         // Get auto_translate deepL
         if (!empty($assoc_args['deepl']) && filter_var($assoc_args['deepl'], FILTER_VALIDATE_BOOLEAN) == true) {
