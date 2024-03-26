@@ -51,6 +51,12 @@ function woody_pll_get_lang_by_slug($slug)
     return apply_filters('woody_pll_get_lang_by_slug', $slug);
 }
 
+// Retourne le code langue sur 2 caractères mais en se basant sur la locale (ex: fr)
+function woody_pll_get_lang_by_locale($locale)
+{
+    return apply_filters('woody_pll_get_lang_by_locale', $locale);
+}
+
 // Retourne le code locale à partir du slug (ex: fr_FR)
 function woody_pll_get_locale_by_slug($slug)
 {
