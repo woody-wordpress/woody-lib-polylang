@@ -470,13 +470,14 @@ final class Polylang extends Module
             $locale = str_replace('-', '_', $locale);
 
             if(strpos($locale, '_') !== false) {
+                $split_locale = explode('_', $locale);
                 // On prend les 2 premiers caractères de la locale
                 if(in_array($locale, ['en_GB', 'ja_JP', 'zh_CN', 'ko_KR'])) {
-                    return current(explode('_', $locale));
+                    return current($split_locale);
                 }
 
                 // On prend les 2 derniers caractères de la locale
-                return strtolower(end(explode('_', $locale)));
+                return strtolower(end($split_locale));
             } else {
                 return PLL_DEFAULT_LANG;
             }
