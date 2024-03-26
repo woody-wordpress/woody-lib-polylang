@@ -23,7 +23,7 @@ final class Polylang extends Module
 
     public function initialize(ParameterManager $parameterManager, Container $container)
     {
-        define('WOODY_LIB_POLYLANG_VERSION', '2.18.2');
+        define('WOODY_LIB_POLYLANG_VERSION', '2.18.3');
         define('WOODY_LIB_POLYLANG_ROOT', __FILE__);
         define('WOODY_LIB_POLYLANG_DIR_ROOT', dirname(WOODY_LIB_POLYLANG_ROOT));
         define('WOODY_LIB_POLYLANG_URL', basename(__DIR__) . '/Resources/Assets');
@@ -93,6 +93,7 @@ final class Polylang extends Module
         add_filter('woody_pll_get_post_language', [$this, 'woodyPllGetPostLanguage'], 10, 1);
         add_filter('woody_pll_get_post_season', [$this, 'woodyPllGetPostSeason'], 10, 1);
         add_filter('woody_pll_get_lang_by_slug', [$this, 'woodyPllGetLangBySlug'], 10, 1);
+        add_filter('woody_pll_get_lang_by_locale', [$this, 'woodyPllGetLangByLocale'], 10, 1);
         add_filter('woody_pll_get_locale_by_slug', [$this, 'woodyPllGetLocaleBySlug'], 10, 1);
         add_filter('woody_pll_get_slug_by_locale', [$this, 'woodyPllGetSlugByLocale'], 10, 1);
         add_filter('woody_pll_the_languages', [$this, 'woodyPllTheLanguages'], 10, 1);
@@ -455,6 +456,33 @@ final class Polylang extends Module
             }
 
             output_error(sprintf('Impossible de trouver la langue de ce slug "%s"', $slug));
+        }
+    }
+
+    public function woodyPllGetLangByLocale($locale)
+    {
+        if (function_exists('pll_languages_list')) {
+            if (empty($locale)) {
+                output_error('Impossible de trouver la langue de cette locale vide');
+                return;
+            }
+
+            $locale = str_replace('-', '_', $locale);
+
+            if(strpos($locale, '_') !== false) {
+                $split_locale = explode('_', $locale);
+                // On prend les 2 premiers caractères de la locale
+                if(in_array($locale, ['en_GB', 'ja_JP', 'zh_CN', 'ko_KR'])) {
+                    return current($split_locale);
+                }
+
+                // On prend les 2 derniers caractères de la locale
+                return strtolower(end($split_locale));
+            } else {
+                return PLL_DEFAULT_LANG;
+            }
+
+            output_error(sprintf('Impossible de trouver la langue de cette locale "%s"', $locale));
         }
     }
 
