@@ -119,13 +119,18 @@ class PolylangManager
                     $value = (is_array($value)) ? current($value) : maybe_unserialize($value);
                     $new_value = $this->translate_meta($value, $key, $lang, $tr_post_id, $post->ID);
 
+                    // Si le retour est un tableau on serialize pour comparer
+                    $compare_new_value = (!empty($new_value) && (is_array($new_value) || is_object($data))) ? serialize($new_value) : $new_value;
+
                     // Si différent on met à jour
-                    if (!empty($value) && (!empty($new_value) && $value != $new_value)) {
+                    if (!empty($value) && (!empty($new_value) && $value != $compare_new_value)) {
                         if ($assoc_args['dry']) {
                             output_log(sprintf('wp_postmeta %s : %s will be replaced by %s for post %s', $key, $value, $new_value, $post->ID));
                         } else {
                             update_post_meta($post->ID, $key, $new_value);
-                            output_success(sprintf('%s (%s > %s)', $key, $value, $new_value));
+                            output_success(sprintf('%s', $key));
+                            output_log(sprintf(' - Avant : %s', $value));
+                            output_log(sprintf(' - Après : %s', maybe_serialize($new_value)));
                         }
 
                         ++$fixed_post_metas;
@@ -172,6 +177,11 @@ class PolylangManager
 
     private function url_to_postid($url)
     {
+        // On supprime le domaine qui perturbe url_to_postid
+        $parsed_url = parse_url($url);
+        $url = (!empty($parsed_url['host']) && !empty($parsed_url['scheme'])) ? $parsed_url['path'] : $url;
+
+        // On cherche le post_id avec l'url
         $url_to_postid = url_to_postid($url);
         if (empty($url_to_postid)) {
             $parse_url = parse_url($url);
@@ -189,5 +199,4 @@ class PolylangManager
 
         return $url_to_postid;
     }
-
 }
