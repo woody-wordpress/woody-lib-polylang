@@ -23,7 +23,7 @@ final class Polylang extends Module
 
     public function initialize(ParameterManager $parameterManager, Container $container)
     {
-        define('WOODY_LIB_POLYLANG_VERSION', '2.18.4');
+        define('WOODY_LIB_POLYLANG_VERSION', '2.18.5');
         define('WOODY_LIB_POLYLANG_ROOT', __FILE__);
         define('WOODY_LIB_POLYLANG_DIR_ROOT', dirname(WOODY_LIB_POLYLANG_ROOT));
         define('WOODY_LIB_POLYLANG_URL', basename(__DIR__) . '/Resources/Assets');
@@ -472,7 +472,7 @@ final class Polylang extends Module
             if(strpos($locale, '_') !== false) {
                 $split_locale = explode('_', $locale);
                 // On prend les 2 premiers caractères de la locale
-                if(in_array($locale, ['en_GB', 'ja_JP', 'zh_CN', 'ko_KR'])) {
+                if(in_array($locale, ['en_GB', 'ja_JP', 'zh_CN', 'ko_KR', 'ca_ES'])) {
                     return current($split_locale);
                 }
 
