@@ -27,6 +27,8 @@ if (!defined('ABSPATH')) {
             class="nav-tab <?php echo $active_tab == 'seasons_lang' ? 'nav-tab-active' : ''; ?>">Saisonnalité</a>
         <a href="?page=woody-polylang-options&tab=hawwwai_lang"
             class="nav-tab <?php echo $active_tab == 'hawwwai_lang' ? 'nav-tab-active' : ''; ?>">Hawwwai</a>
+        <a href="?page=woody-polylang-options&tab=youbook_lang"
+            class="nav-tab <?php echo $active_tab == 'youbook_lang' ? 'nav-tab-active' : ''; ?>">Youbook</a>
         <a href="?page=woody-polylang-options&tab=usage_lang"
             class="nav-tab <?php echo $active_tab == 'usage_lang' ? 'nav-tab-active' : ''; ?>">Usages</a>
         <?php
@@ -66,6 +68,14 @@ if (!defined('ABSPATH')) {
             ?>
         <div class="help">
             ATTENTION ! Si vous cochez une langue les fiches ne seront plus importées dans cette langue.
+            La langue par défaut ne peut être désactivée.
+        </div>
+        <?php
+            break;
+        case 'youbook_lang':
+            ?>
+        <div class="help">
+            ATTENTION ! Si vous cochez une langue les produits ne seront plus importés dans cette langue.
             La langue par défaut ne peut être désactivée.
         </div>
         <?php

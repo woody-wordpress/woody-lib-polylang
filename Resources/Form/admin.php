@@ -126,6 +126,35 @@ switch ($active_tab) {
 
         break;
 
+    case 'youbook_lang':
+        $woody_youbook_lang_disable = get_option('woody_youbook_lang_disable', []);
+        foreach ($languages as $language) {
+            if ($language->slug == PLL_DEFAULT_LANG) {
+                continue;
+            }
+
+            $enable = in_array($language->slug, $woody_youbook_lang_disable);
+
+            $form->addCheckbox($language->slug, $language->name)
+                ->setDefaultValue($enable);
+        }
+
+        $form->addSubmit('import', 'Désactiver les langues')
+            ->setHtmlAttribute('class', 'button button-primary');
+
+        if ($form->isSuccess()) {
+            $options = [];
+            foreach ($form->getValues() as $lang => $bool) {
+                if ($bool) {
+                    $options[] = $lang;
+                }
+            }
+
+            update_option('woody_youbook_lang_disable', $options);
+        }
+
+        break;
+
     case 'usage_lang':
         $meta_lang_usages_options = get_option('meta_lang_usages');
         $meta_lang_usages = apply_filters('meta_lang_usages', [
