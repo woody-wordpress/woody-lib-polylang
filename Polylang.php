@@ -23,7 +23,7 @@ final class Polylang extends Module
 
     public function initialize(ParameterManager $parameterManager, Container $container)
     {
-        define('WOODY_LIB_POLYLANG_VERSION', '2.18.6');
+        define('WOODY_LIB_POLYLANG_VERSION', '2.19.0');
         define('WOODY_LIB_POLYLANG_ROOT', __FILE__);
         define('WOODY_LIB_POLYLANG_DIR_ROOT', dirname(WOODY_LIB_POLYLANG_ROOT));
         define('WOODY_LIB_POLYLANG_URL', basename(__DIR__) . '/Resources/Assets');
@@ -684,6 +684,7 @@ final class Polylang extends Module
         $currentSeasonLangs = $this->woodyPllLanguagesList('auto');
         if (!empty($currentSeasonLangs)) {
             $hreflangs = [];
+            $post_id = get_the_ID();
             foreach ($currentSeasonLangs as $langObject) {
                 // On exclut les langues non actives. PLL n'exclut pas la langue courante, donc on fait de même
                 //(Google recommends to include self link https://support.google.com/webmasters/answer/189077?hl=en)
@@ -691,9 +692,12 @@ final class Polylang extends Module
                     continue;
                 }
 
-                $translation = apply_filters('woody_get_permalink', pll_get_post(get_the_ID(), $langObject->slug));
-                if (!empty($translation)) {
-                    $hreflangs[$this->locale_to_lang($langObject->locale)] = $translation;
+                $tt_post_id = pll_get_post($post_id, $langObject->slug);
+                if(!empty($tt_post_id)) {
+                    $translation = woody_get_permalink($tt_post_id);
+                    if (!empty($translation)) {
+                        $hreflangs[$this->locale_to_lang($langObject->locale)] = $translation;
+                    }
                 }
             }
         } else {
