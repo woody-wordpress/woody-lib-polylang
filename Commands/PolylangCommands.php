@@ -178,7 +178,7 @@ class PolylangCommands
                     output_h2(sprintf('Traduction %s > %s', $source_lang, $target_lang));
                     if ($target_lang != $source_lang) {
                         foreach ($query_result->posts as $post) {
-                            $this->translatePostAndChildren($post, $source_lang, $target_lang, $auto_translate, false);
+                            $this->translatePostAndChildren($post, $source_lang, $target_lang, $auto_translate, $sync_before_translate);
                         }
                     } else {
                         output_error('Ne pas traduire dans la même langue');
