@@ -472,7 +472,7 @@ final class Polylang extends Module
             if(strpos($locale, '_') !== false) {
                 $split_locale = explode('_', $locale);
                 // On prend les 2 premiers caractères de la locale
-                if(in_array($locale, ['en_GB', 'ja_JP', 'zh_CN', 'ko_KR', 'ca_ES'])) {
+                if(in_array($locale, ['en_GB', 'ja_JP', 'zh_CN', 'ko_KR', 'ca_ES', 'pt_BR'])) {
                     return current($split_locale);
                 }
 
