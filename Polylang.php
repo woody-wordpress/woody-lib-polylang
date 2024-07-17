@@ -806,8 +806,11 @@ final class Polylang extends Module
     // Filters the post fields to synchronize when synchronizing posts
     public function unsetSyncPostURL($fields, $post_id, $lang, $save_group)
     {
-        unset($fields['post_name']);
-        unset($fields['post_title']);
+        $post = get_post($post_id);
+        if($post->post_type == 'page') {
+            unset($fields['post_name']);
+            //unset($fields['post_title']);
+        }
 
         return $fields;
     }
