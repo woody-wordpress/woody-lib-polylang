@@ -71,6 +71,9 @@ class PolylangManager
                 // On remet les synchronisations comme avant
                 PLL()->sync_post->sync_model->save_group($post->ID, $synchronized_posts);
 
+                // On déplace le titre au moment de la synchronisation
+                $this->syncPostTitle($post->ID, $tr_post_id, $target_lang, $auto_translate);
+
                 // On traduit le post synchronisé (qui contient désormais des textes dans la langue source)
                 if ($auto_translate) {
                     do_action('woody_auto_translate_post', $tr_post_id, $source_lang);
@@ -81,24 +84,33 @@ class PolylangManager
         } else {
             $tr_post_id = PLL()->sync_post->sync_model->copy_post($post->ID, $target_lang, false);
 
+            // On déplace le titre au moment de la copie
+            $this->syncPostTitle($post->ID, $tr_post_id, $target_lang, $auto_translate);
+
             // Si on est en mode "auto_translate", on cherche un traducteur automatique (dans un autre addon par exemple)
             if ($auto_translate) {
                 do_action('woody_auto_translate_post', $tr_post_id, $source_lang);
-            } else {
-                // Permet de créer une page avec suffixe de langue dans le titre et le permalien lors de la traduction de pages en masse
-                // Don't use wp_update_post to avoid conflict (reverse sync).
-                global $wpdb;
-
-                $post_title = get_the_title($post->ID);
-                $post_title .= ' - ' . strtoupper($target_lang);
-                $wpdb->update($wpdb->posts, ['post_title' => $post_title, 'post_name' => sanitize_title($post_title)], ['ID' => $tr_post_id]);
-                output_success(sprintf('Titre du post changé en "%s"', $post_title));
-                clean_post_cache($tr_post_id);
-
-                $tr_post = get_post($tr_post_id);
-                do_action('save_post', $tr_post_id, $tr_post, true);
             }
         }
+    }
+
+    private function syncPostTitle($post_id, $tr_post_id, $target_lang, $auto_translate = false)
+    {
+        global $wpdb;
+
+        $post_title = get_the_title($post_id);
+
+        // Si on ne lance pas une traduction AUTO, on rajoute le langue en suffix
+        if(!$auto_translate) {
+            $post_title .= ' - ' . strtoupper($target_lang);
+        }
+
+        $wpdb->update($wpdb->posts, ['post_title' => $post_title, 'post_name' => sanitize_title($post_title)], ['ID' => $tr_post_id]);
+        output_success(sprintf('Titre du post changé en "%s"', $post_title));
+        clean_post_cache($tr_post_id);
+
+        $tr_post = get_post($tr_post_id);
+        do_action('save_post', $tr_post_id, $tr_post, true);
     }
 
     /**

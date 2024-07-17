@@ -23,7 +23,7 @@ final class Polylang extends Module
 
     public function initialize(ParameterManager $parameterManager, Container $container)
     {
-        define('WOODY_LIB_POLYLANG_VERSION', '2.20.3');
+        define('WOODY_LIB_POLYLANG_VERSION', '2.21.0');
         define('WOODY_LIB_POLYLANG_ROOT', __FILE__);
         define('WOODY_LIB_POLYLANG_DIR_ROOT', dirname(WOODY_LIB_POLYLANG_ROOT));
         define('WOODY_LIB_POLYLANG_URL', basename(__DIR__) . '/Resources/Assets');
@@ -806,11 +806,10 @@ final class Polylang extends Module
     // Filters the post fields to synchronize when synchronizing posts
     public function unsetSyncPostURL($fields, $post_id, $lang, $save_group)
     {
-        $post = get_post($post_id);
-        if($post->post_type == 'page') {
-            unset($fields['post_name']);
-            //unset($fields['post_title']);
-        }
+        // Il ne faut pas synchroniser ces champs car on les rajoute ensuite avec une requête SQL
+        // Pour éviter de générer une url qui viendrait en conflit avec le post source
+        unset($fields['post_name']);
+        unset($fields['post_title']);
 
         return $fields;
     }
