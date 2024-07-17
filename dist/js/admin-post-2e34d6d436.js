@@ -1,1 +1,0 @@
-!function(e,n,t){n.body.classList.contains("langs-to-hide")&&n.body.classList.forEach(function(e,t){if(e.includes("hide-")){var s=e.substring(5);if(n.getElementById("htr_lang_"+s)){var a=n.getElementById("htr_lang_"+s).closest("tr");a&&a.remove()}var l=n.getElementsByClassName("column-language_"+s);for(let e of l)e.innerHTML=""}})}(window,document);
