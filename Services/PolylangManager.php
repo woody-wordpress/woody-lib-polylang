@@ -90,6 +90,10 @@ class PolylangManager
             // Si on est en mode "auto_translate", on cherche un traducteur automatique (dans un autre addon par exemple)
             if ($auto_translate) {
                 do_action('woody_auto_translate_post', $tr_post_id, $source_lang);
+                $polylang = get_option('polylang');
+                if (!empty($polylang) && $polylang['force_lang'] == 3 && !empty($polylang['domains'])) {
+                    $this->cleanPostTitle($tr_post_id, $target_lang);
+                }
             }
         }
     }
@@ -100,8 +104,10 @@ class PolylangManager
 
         $post_title = get_the_title($post_id);
 
+        $polylang = get_option('polylang');
+
         // Si on ne lance pas une traduction AUTO, on rajoute le langue en suffix
-        if(!$auto_translate) {
+        if(!$auto_translate || (!empty($polylang) && $polylang['force_lang'] == 3 && !empty($polylang['domains']))) { // WARNING: Génère des bugs (création de redirections modified posts) lors de la traduction automatique des feuillets si domaines différents
             $post_title .= ' - ' . strtoupper($target_lang);
         }
 
@@ -111,6 +117,19 @@ class PolylangManager
 
         $tr_post = get_post($tr_post_id);
         do_action('save_post', $tr_post_id, $tr_post, true);
+    }
+
+    private function cleanPostTitle($post_id, $lang)
+    {
+        $post_title = get_the_title($post_id);
+
+        wp_update_post([
+            'ID'           => $post_id,
+            'post_title'   => str_replace(' &#8211; ' . strtoupper($lang), '', $post_title), // ' - EN' par exemple
+            'post_name'    => str_replace(' &#8211; ' . strtoupper($lang), '', $post_title)
+        ]);
+
+        clean_post_cache($post_id);
     }
 
     /**
