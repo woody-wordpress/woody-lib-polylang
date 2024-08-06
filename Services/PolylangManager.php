@@ -90,7 +90,10 @@ class PolylangManager
             // Si on est en mode "auto_translate", on cherche un traducteur automatique (dans un autre addon par exemple)
             if ($auto_translate) {
                 do_action('woody_auto_translate_post', $tr_post_id, $source_lang);
-                $this->cleanPostTitle($tr_post_id, $target_lang);
+                $polylang = get_option('polylang');
+                if (!empty($polylang) && $polylang['force_lang'] == 3 && !empty($polylang['domains'])) {
+                    $this->cleanPostTitle($tr_post_id, $target_lang);
+                }
             }
         }
     }
@@ -101,10 +104,12 @@ class PolylangManager
 
         $post_title = get_the_title($post_id);
 
+        $polylang = get_option('polylang');
+
         // Si on ne lance pas une traduction AUTO, on rajoute le langue en suffix
-        // if(!$auto_translate) { // WARNING: Génère des bugs (création de redirections modified posts) lors de la traduction automatique des feuillets si domaines différents
+        if(!$auto_translate || (!empty($polylang) && $polylang['force_lang'] == 3 && !empty($polylang['domains']))) { // WARNING: Génère des bugs (création de redirections modified posts) lors de la traduction automatique des feuillets si domaines différents
             $post_title .= ' - ' . strtoupper($target_lang);
-        // }
+        }
 
         $wpdb->update($wpdb->posts, ['post_title' => $post_title, 'post_name' => sanitize_title($post_title)], ['ID' => $tr_post_id]);
         output_success(sprintf('Titre du post changé en "%s"', $post_title));
