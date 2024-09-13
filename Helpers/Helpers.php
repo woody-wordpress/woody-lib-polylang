@@ -90,6 +90,12 @@ function woody_pll_the_seasons()
     return apply_filters('woody_pll_the_seasons', null);
 }
 
+// Liste les saisons groupés par code_lang (ex: ['fr' => ['hiver', 'ete'], 'en' => ['winter', 'summer']])
+function woody_pll_langs_seasons()
+{
+    return apply_filters('woody_pll_langs_seasons', null);
+}
+
 // Retourne la langue par défaut mais en se basant sur la locale si on est sur un site avec saison (ex: fr)
 function woody_pll_default_lang($season = null)
 {
