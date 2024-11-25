@@ -103,6 +103,7 @@ final class Polylang extends Module
         add_filter('woody_pll_default_lang', [$this, 'woodyPllDefaultLang'], 10, 1);
         add_filter('woody_pll_default_lang_code', [$this, 'woodyPllDefaultlangCode'], 10, 1);
         add_filter('woody_default_lang_post_title', [$this, 'woodyDefaultLangPostTitle'], 10, 1);
+        add_filter('woody_pll_locale_to_lang', [$this, 'woodyPllLocaleToLang'], 10, 1);
 
         // Action polylangManager
         add_action('woody_translate_post', [$this->polylangManager, 'woodyTranslatePost'], 10, 4);
@@ -278,7 +279,7 @@ final class Polylang extends Module
 
         $languages = pll_languages_list(['fields' => 'locale']);
         foreach ($languages as $locale) {
-            $return[] = $this->locale_to_lang($locale);
+            $return[] = $this->woodyPllLocaleToLang($locale);
         }
 
         return array_values(array_unique($return));
@@ -418,7 +419,7 @@ final class Polylang extends Module
         if (!empty($woody_lang_seasons)) {
             $languages = pll_languages_list(['fields' => '']);
             foreach ($languages as $lang => $language) {
-                $return[$this->locale_to_lang($language->locale)][] = $language->slug;
+                $return[$this->woodyPllLocaleToLang($language->locale)][] = $language->slug;
             }
         }
 
@@ -448,7 +449,7 @@ final class Polylang extends Module
     public function woodyPllDefaultlangCode()
     {
         $locale = pll_default_language('locale');
-        return $this->locale_to_lang($locale);
+        return $this->woodyPllLocaleToLang($locale);
     }
 
     public function woodyPllGetLangBySlug($slug)
@@ -462,13 +463,13 @@ final class Polylang extends Module
             $languages = pll_languages_list(['fields' => '']);
             foreach ($languages as $language) {
                 if ($language->slug == $slug) {
-                    return $this->locale_to_lang($language->locale);
+                    return $this->woodyPllLocaleToLang($language->locale);
                 }
             }
 
             // Fallback if $slug is already a 2-character code_lang
             foreach ($languages as $language) {
-                $code_lang = $this->locale_to_lang($language->locale);
+                $code_lang = $this->woodyPllLocaleToLang($language->locale);
                 if ($code_lang == $slug) {
                     return $code_lang;
                 }
@@ -558,7 +559,7 @@ final class Polylang extends Module
     {
         if (function_exists('pll_get_post_language') && !empty($post_id)) {
             $locale = pll_get_post_language($post_id, 'locale');
-            return $this->locale_to_lang($locale);
+            return $this->woodyPllLocaleToLang($locale);
         }
     }
 
@@ -577,7 +578,7 @@ final class Polylang extends Module
     {
         if (function_exists('pll_current_language')) {
             $locale = pll_current_language('locale');
-            return $this->locale_to_lang($locale);
+            return $this->woodyPllLocaleToLang($locale);
         }
     }
 
@@ -592,7 +593,7 @@ final class Polylang extends Module
         }
     }
 
-    private function locale_to_lang($locale)
+    public function woodyPllLocaleToLang($locale)
     {
         return (strpos($locale, '_') !== false) ? current(explode('_', $locale)) : PLL_DEFAULT_LANG;
     }
@@ -715,7 +716,7 @@ final class Polylang extends Module
                 if(!empty($tt_post_id)) {
                     $translation = woody_get_permalink($tt_post_id);
                     if (!empty($translation)) {
-                        $hreflangs[$this->locale_to_lang($langObject->locale)] = $translation;
+                        $hreflangs[$this->woodyPllLocaleToLang($langObject->locale)] = $translation;
                     }
                 }
             }

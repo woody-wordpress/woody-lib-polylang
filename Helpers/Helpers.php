@@ -107,3 +107,7 @@ function woody_default_lang_post_title($post_id)
 {
     return apply_filters('woody_default_lang_post_title', $post_id);
 }
+
+function woody_pll_locale_to_lang($locale) {
+    return apply_filters('woody_pll_locale_to_lang', $locale);
+}
