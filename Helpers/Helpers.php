@@ -91,9 +91,9 @@ function woody_pll_the_seasons()
 }
 
 // Liste les saisons groupés par code_lang (ex: ['fr' => ['hiver', 'ete'], 'en' => ['winter', 'summer']])
-function woody_pll_langs_seasons()
+function woody_pll_langs_seasons($only_default = false)
 {
-    return apply_filters('woody_pll_langs_seasons', null);
+    return apply_filters('woody_pll_langs_seasons', $only_default);
 }
 
 // Retourne la langue par défaut mais en se basant sur la locale si on est sur un site avec saison (ex: fr)
@@ -108,6 +108,7 @@ function woody_default_lang_post_title($post_id)
     return apply_filters('woody_default_lang_post_title', $post_id);
 }
 
-function woody_pll_locale_to_lang($locale) {
+function woody_pll_locale_to_lang($locale)
+{
     return apply_filters('woody_pll_locale_to_lang', $locale);
 }
