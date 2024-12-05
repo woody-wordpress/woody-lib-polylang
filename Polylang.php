@@ -104,6 +104,7 @@ final class Polylang extends Module
         add_filter('woody_pll_default_lang_code', [$this, 'woodyPllDefaultlangCode'], 10, 1);
         add_filter('woody_default_lang_post_title', [$this, 'woodyDefaultLangPostTitle'], 10, 1);
         add_filter('woody_pll_locale_to_lang', [$this, 'woodyPllLocaleToLang'], 10, 1);
+        add_filter('woody_pll_get_post_translations', [$this, 'woodyPllGetPostTranslations'], 10, 1);
 
         // Action polylangManager
         add_action('woody_translate_post', [$this->polylangManager, 'woodyTranslatePost'], 10, 4);
@@ -604,6 +605,14 @@ final class Polylang extends Module
     public function woodyPllLocaleToLang($locale)
     {
         return (strpos($locale, '_') !== false) ? current(explode('_', $locale)) : PLL_DEFAULT_LANG;
+    }
+
+    public function woodyPllGetPostTranslations($post_id) {
+        $res = [];
+        if (function_exists('pll_get_post_translations')) {
+            $res = pll_get_post_translations($post_id);
+        }
+        return $res;
     }
 
     // --------------------------------
