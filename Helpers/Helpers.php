@@ -112,3 +112,11 @@ function woody_pll_locale_to_lang($locale)
 {
     return apply_filters('woody_pll_locale_to_lang', $locale);
 }
+
+/**
+ * Retrieve specified post translations
+ * @return array an associative array of translations with language code as key and translation post_id as value
+ */
+function woody_pll_get_post_translations($post_id) {
+    return apply_filters('woody_pll_get_post_translations', $post_id);
+}
