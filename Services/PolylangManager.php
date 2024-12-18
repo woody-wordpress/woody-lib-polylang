@@ -201,6 +201,16 @@ class PolylangManager
                 $value['url'] = (empty($pll_post_id)) ? $value['url'] : get_permalink($pll_post_id);
                 return $value;
             }
+        } elseif (substr($key, -24) == 'rdbk_feed_mixed_leaflets') {
+            $value = maybe_unserialize($value);
+            if(!empty($value)) {
+                foreach($value as $post_key => $post_id) {
+                    if(!str_contains($post_id,'_')) {
+                        $value[$post_key] = pll_get_post($post_id,$lang);
+                    }
+                }
+            }
+            return $value;
         } else {
             return $this->pllacfAutoTranslate->translate_meta($value, $key, $lang, $tr_post_id, $post_id);
         }
