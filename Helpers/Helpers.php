@@ -27,6 +27,12 @@ function woody_pll_current_language()
     return apply_filters('woody_pll_current_language', null);
 }
 
+// Retourne la locale courante (ex: fr_FR)
+function woody_pll_current_locale()
+{
+    return apply_filters('woody_pll_current_locale', null);
+}
+
 // Retourne la saison de la langue courante (ex: hiver)
 function woody_pll_current_season()
 {
