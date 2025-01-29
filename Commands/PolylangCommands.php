@@ -16,7 +16,7 @@ use Woody\Lib\Polylang\Services\PolylangManager;
 // WP_SITE_KEY=superot wp woody:translate terms --source=fr --target=en,de --tax=themes,places --deepl=true
 // WP_SITE_KEY=superot wp woody:translate fields --post=1234 --source=fr
 // WP_SITE_KEY=superot wp woody:translate fields --lang=en --source=fr
-// WP_SITE_KEY=superot wp woody:translate medias
+// WP_SITE_KEY=superot wp woody:translate medias --target=en --sync=true
 
 class PolylangCommands
 {
@@ -419,6 +419,8 @@ class PolylangCommands
     public function medias($args, $assoc_args)
     {
         $source_lang = (empty($assoc_args['source'])) ? woody_pll_default_lang() : $assoc_args['source'];
+        $target_lang = $assoc_args['target'];
+        $sync = $assoc_args['sync'];
 
         // Count Total posts
         $args = [
@@ -437,13 +439,41 @@ class PolylangCommands
                 ++$this->count;
                 output_h3(sprintf('%s/%s - Traduction du média N°%s', $this->count, $this->total, $post->ID));
                 if (wp_attachment_is_image($post->ID)) {
-                    do_action('woody_save_attachment', $post->ID);
+                    if($sync) {
+                        $this->translateMediaMeta($post->ID, $source_lang, $target_lang);
+                        do_action('woody_sync_attachment', $post->ID);
+                    } else {
+                        do_action('woody_save_attachment', $post->ID);
+                    }
                 } else {
                     output_log("Ce média n'est pas une image");
                 }
+                return;
             }
         } else {
             output_error(sprintf('0 post à traduire. Etes-vous certain que la langue (%s) existe, et que des médias existent dans cette langue.', $source_lang));
+        }
+    }
+
+    private function translateMediaMeta($attachment_id, $source_lang, $target_lang)
+    {
+        $target_langs = (empty($target_lang)) ? pll_languages_list() : array($target_lang);
+        $source_attachment = get_post($attachment_id);
+        if(!empty($source_attachment)) {
+            foreach($target_langs as $target_lang) {
+                if($target_lang != $source_lang) {
+                    $tr_attachment_id = pll_get_post($attachment_id, $target_lang);
+                    if(!empty($tr_attachment_id)) {
+                        $tr_attachment = get_post($tr_attachment_id);
+                        $tr_attachment->post_title = $source_attachment->post_title;
+                        $tr_attachment->post_content = $source_attachment->post_content;
+                        $tr_attachment->post_excerpt = $source_attachment->post_excerpt;
+                        update_post_meta($tr_attachment->ID, '_wp_attachment_image_alt', get_post_meta($attachment_id, '_wp_attachment_image_alt', true));
+                        $tr_attachment_id = wp_update_post($tr_attachment, true);
+                        do_action('woody_auto_translate_media', $tr_attachment_id, $source_lang);
+                    }
+                }
+            }
         }
     }
 }
