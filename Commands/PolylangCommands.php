@@ -16,7 +16,7 @@ use Woody\Lib\Polylang\Services\PolylangManager;
 // WP_SITE_KEY=superot wp woody:translate terms --source=fr --target=en,de --tax=themes,places --deepl=true
 // WP_SITE_KEY=superot wp woody:translate fields --post=1234 --source=fr
 // WP_SITE_KEY=superot wp woody:translate fields --lang=en --source=fr
-// WP_SITE_KEY=superot wp woody:translate medias
+// WP_SITE_KEY=superot wp woody:translate medias --target=en --sync=true
 
 class PolylangCommands
 {
@@ -419,6 +419,7 @@ class PolylangCommands
     public function medias($args, $assoc_args)
     {
         $source_lang = (empty($assoc_args['source'])) ? woody_pll_default_lang() : $assoc_args['source'];
+        $syncMeta = filter_var($assoc_args['sync'], FILTER_VALIDATE_BOOLEAN);
 
         // Count Total posts
         $args = [
@@ -437,7 +438,7 @@ class PolylangCommands
                 ++$this->count;
                 output_h3(sprintf('%s/%s - Traduction du média N°%s', $this->count, $this->total, $post->ID));
                 if (wp_attachment_is_image($post->ID)) {
-                    do_action('woody_save_attachment', $post->ID);
+                        do_action('woody_save_attachment', $post->ID, $syncMeta);
                 } else {
                     output_log("Ce média n'est pas une image");
                 }
