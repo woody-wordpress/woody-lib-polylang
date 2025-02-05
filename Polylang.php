@@ -23,7 +23,7 @@ final class Polylang extends Module
 
     public function initialize(ParameterManager $parameterManager, Container $container)
     {
-        define('WOODY_LIB_POLYLANG_VERSION', '2.23.4');
+        define('WOODY_LIB_POLYLANG_VERSION', '2.23.5');
         define('WOODY_LIB_POLYLANG_ROOT', __FILE__);
         define('WOODY_LIB_POLYLANG_DIR_ROOT', dirname(WOODY_LIB_POLYLANG_ROOT));
         define('WOODY_LIB_POLYLANG_URL', basename(__DIR__) . '/Resources/Assets');
@@ -612,10 +612,12 @@ final class Polylang extends Module
 
     public function woodyPllLocaleToLang($locale)
     {
-        return (strpos($locale, '_') !== false) ? current(explode('_', $locale)) : PLL_DEFAULT_LANG;
+        $pll_default_lang = (defined('PLL_DEFAULT_LANG')) ? PLL_DEFAULT_LANG : 'fr';
+        return (strpos($locale, '_') !== false) ? current(explode('_', $locale)) : $pll_default_lang;
     }
 
-    public function woodyPllGetPostTranslations($post_id) {
+    public function woodyPllGetPostTranslations($post_id)
+    {
         $res = [];
         if (function_exists('pll_get_post_translations')) {
             $res = pll_get_post_translations($post_id);
