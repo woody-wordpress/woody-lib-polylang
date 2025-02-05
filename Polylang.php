@@ -612,10 +612,12 @@ final class Polylang extends Module
 
     public function woodyPllLocaleToLang($locale)
     {
-        return (strpos($locale, '_') !== false) ? current(explode('_', $locale)) : PLL_DEFAULT_LANG;
+        $pll_default_lang = (defined('PLL_DEFAULT_LANG')) ? PLL_DEFAULT_LANG : 'fr';
+        return (strpos($locale, '_') !== false) ? current(explode('_', $locale)) : $pll_default_lang;
     }
 
-    public function woodyPllGetPostTranslations($post_id) {
+    public function woodyPllGetPostTranslations($post_id)
+    {
         $res = [];
         if (function_exists('pll_get_post_translations')) {
             $res = pll_get_post_translations($post_id);
